@@ -1,9 +1,9 @@
 openapi: 3.0.3
 info:
-  title: TCSS 460 Group Project API
+  title: TCSS 460 Team 6 API
   description: |
-    **Team:** [Your Team Name]
-    **Deployed URL:** [Your deployed URL]
+    **Team:** Group 6
+    **Deployed URL:** https://your-deployed-url-here.example.com
 
     A RESTful API for the TCSS 460 group project.
   version: 0.1.0
@@ -11,6 +11,8 @@ info:
 servers:
   - url: http://localhost:3000
     description: Local development
+  - url: https://your-deployed-url-here.example.com
+    description: Deployed production server
 
 tags:
   - name: General
@@ -33,3 +35,19 @@ paths:
                   message:
                     type: string
                     example: 'Hello, TCSS 460!'
+  /health:
+    get:
+      tags: [General]
+      summary: Health check
+      description: Returns the service health status.
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: OK
