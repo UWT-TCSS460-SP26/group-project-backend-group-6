@@ -3,7 +3,7 @@ info:
   title: TCSS 460 Team 6 API
   description: |
     **Team:** Group 6
-    **Deployed URL:** https://your-deployed-url-here.example.com
+    **Deployed URL:** https://tcss460-team-6-api.onrender.com
 
     A RESTful API for the TCSS 460 group project.
   version: 0.1.0
@@ -11,7 +11,7 @@ info:
 servers:
   - url: http://localhost:3000
     description: Local development
-  - url: https://your-deployed-url-here.example.com
+  - url: https://tcss460-team-6-api.onrender.com
     description: Deployed production server
 
 tags:
