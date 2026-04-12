@@ -23,6 +23,11 @@ app.get('/hello', (_request: Request, response: Response) => {
   response.json({ message: 'Hello, TCSS 460!' });
 });
 
+// Jayda's route
+app.get('/hello/jayda', (_request: Request, response: Response) => {
+  response.json({ message: 'Hello from Jayda!' });
+});
+
 app.get('/connor', (_request: Request, response: Response) => {
   response.json({ message: 'Connor says hello!' });
 });
