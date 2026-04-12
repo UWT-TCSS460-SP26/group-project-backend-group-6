@@ -33,4 +33,4 @@ API documentation is at [http://localhost:3000/api-docs](http://localhost:3000/a
 
 ## Deployed URL
 
-[Add your deployed URL here]
+Deployed URL is at [https://tcss460-team-6-api.onrender.com](https://tcss460-team-6-api.onrender.com)
