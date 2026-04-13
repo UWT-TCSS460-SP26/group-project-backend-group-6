@@ -35,6 +35,10 @@ app.get('/connor', (_request: Request, response: Response) => {
   response.json({ message: 'Connor says hello!' });
 });
 
+app.get('/hello/john-diego', (_request: Request, response: Response) => {
+  response.json({ message: 'Hello, from John!' });
+});
+
 app.get('/health', (_request: Request, response: Response) => {
   response.json({ status: 'OK' });
 });
