@@ -1,29 +1,39 @@
 openapi: 3.0.3
+
 info:
   title: TCSS 460 Team 6 API
+  version: 0.1.0
   description: |
     **Team:** Group 6
     **Deployed URL:** https://tcss460-team-6-api.onrender.com
 
-    A RESTful API for the TCSS 460 group project.
-  version: 0.1.0
+    A RESTful API for the TCSS 460 group project. Proxies movie and TV show data
+    through team-designed endpoints with custom response schemas — clients never
+    interact with any third-party service directly.
 
 servers:
-  - url: http://localhost:3000
-    description: Local development
   - url: https://tcss460-team-6-api.onrender.com
     description: Deployed production server
 
 tags:
   - name: General
     description: General-purpose routes
+  - name: Movies
+    description: Search, browse, and retrieve movie data
+  - name: TV Shows
+    description: Search, browse, and retrieve TV show data
 
+# ─────────────────────────────────────────────
+#  PATHS
+# ─────────────────────────────────────────────
 paths:
+  # ── General ─────────────────────────────────
   /hello:
     get:
       tags: [General]
       summary: Hello
       description: Returns a greeting message.
+      operationId: getHello
       responses:
         '200':
           description: A greeting message
@@ -35,19 +45,747 @@ paths:
                   message:
                     type: string
                     example: 'Hello, TCSS 460!'
+
   /health:
     get:
       tags: [General]
       summary: Health check
-      description: Returns the service health status.
+      description: Returns 200 when the server is running. Used by deployment platforms and uptime monitors.
+      operationId: getHealth
       responses:
         '200':
           description: Service is healthy
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    example: OK
+                $ref: '#/components/schemas/HealthResponse'
+              example:
+                status: OK
+                timestamp: '2026-04-16T10:30:00Z'
+
+  # ── Movies ──────────────────────────────────
+  /media/movies:
+    get:
+      tags: [Movies]
+      summary: Search movies
+      description: >
+        Search for movies by title. Optionally filter by release year or genre.
+        Returns a paginated list of movie cards — enough data to render a poster,
+        title, and release year. For full details, use GET /media/movies/{id}.
+      operationId: searchMovies
+      parameters:
+        - $ref: '#/components/parameters/queryParam'
+        - $ref: '#/components/parameters/yearParam'
+        - $ref: '#/components/parameters/genreIdParam'
+        - $ref: '#/components/parameters/pageParam'
+      responses:
+        '200':
+          description: A paginated list of matching movies
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MovieListResponse'
+              example:
+                page: 1
+                totalPages: 4
+                totalResults: 72
+                results:
+                  - id: 550
+                    title: Fight Club
+                    releaseYear: 1999
+                    posterUrl: 'https://image.tmdb.org/t/p/w500/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg'
+                    rating: 8.4
+                    overview: 'An insomniac office worker and a devil-may-care soap maker form an underground fight club.'
+                    genres:
+                      - id: 18
+                        name: Drama
+                      - id: 53
+                        name: Thriller
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /media/movies/popular:
+    get:
+      tags: [Movies]
+      summary: Popular movies
+      description: >
+        Returns a paginated list of currently popular movies.
+        Popularity is determined by upstream trending and view data.
+        Results are ordered by popularity score descending.
+      operationId: getPopularMovies
+      parameters:
+        - $ref: '#/components/parameters/pageParam'
+      responses:
+        '200':
+          description: A paginated list of popular movies
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MovieListResponse'
+              example:
+                page: 1
+                totalPages: 20
+                totalResults: 400
+                results:
+                  - id: 1022789
+                    title: Inside Out 2
+                    releaseYear: 2024
+                    posterUrl: 'https://image.tmdb.org/t/p/w500/vpnVM9B6NMmQpWeZvzLvDESb2QY.jpg'
+                    rating: 7.6
+                    overview: "Riley's mind headquarters is suddenly turned upside down as Joy and the other Emotions try to make room for a new arrival."
+                    genres:
+                      - id: 16
+                        name: Animation
+                      - id: 10751
+                        name: Family
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /media/movies/{id}:
+    get:
+      tags: [Movies]
+      summary: Movie details
+      description: >
+        Returns full details for a single movie by its ID.
+        Includes all fields needed to render a rich detail page:
+        poster, backdrop, synopsis, runtime, genres, cast, and similar titles.
+      operationId: getMovieById
+      parameters:
+        - $ref: '#/components/parameters/mediaIdParam'
+      responses:
+        '200':
+          description: Full details for the requested movie
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MovieDetail'
+              example:
+                id: 550
+                title: Fight Club
+                tagline: 'Mischief. Mayhem. Soap.'
+                overview: 'An insomniac office worker and a devil-may-care soap maker form an underground fight club that evolves into something much, much more.'
+                releaseYear: 1999
+                releaseDate: '1999-10-15'
+                runtimeMinutes: 139
+                rating: 8.4
+                voteCount: 26280
+                posterUrl: 'https://image.tmdb.org/t/p/w500/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg'
+                backdropUrl: 'https://image.tmdb.org/t/p/original/fCayJrkfRaCRCTh8GqN30f8oyQF.jpg'
+                status: Released
+                genres:
+                  - id: 18
+                    name: Drama
+                  - id: 53
+                    name: Thriller
+                cast:
+                  - name: Brad Pitt
+                    character: Tyler Durden
+                    profileUrl: 'https://image.tmdb.org/t/p/w185/cckcYc2v0yh1tc9QjRelptcOBko.jpg'
+                  - name: Edward Norton
+                    character: The Narrator
+                    profileUrl: 'https://image.tmdb.org/t/p/w185/5XBzD5WuTyVQZeS4VI25z2moMeY.jpg'
+                similar:
+                  - id: 1422
+                    title: The Departed
+                    releaseYear: 2006
+                    posterUrl: 'https://image.tmdb.org/t/p/w500/nT97ifVT2J1yMQmeq20Qblg61T.jpg'
+                    rating: 8.2
+                    overview: "To take down South Boston's Irish Mob, the police send in one of their own to infiltrate it."
+                    genres:
+                      - id: 80
+                        name: Crime
+                      - id: 18
+                        name: Drama
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ── TV Shows ─────────────────────────────────
+  /media/tv:
+    get:
+      tags: [TV Shows]
+      summary: Search TV shows
+      description: >
+        Search for TV shows by title. Optionally filter by first air year or genre.
+        Returns a paginated list of show cards — enough data to render a poster,
+        title, and first air date. For full details, use GET /media/tv/{id}.
+      operationId: searchTVShows
+      parameters:
+        - $ref: '#/components/parameters/queryParam'
+        - $ref: '#/components/parameters/yearParam'
+        - $ref: '#/components/parameters/genreIdParam'
+        - $ref: '#/components/parameters/pageParam'
+      responses:
+        '200':
+          description: A paginated list of matching TV shows
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TVShowListResponse'
+              example:
+                page: 1
+                totalPages: 2
+                totalResults: 28
+                results:
+                  - id: 1396
+                    title: Breaking Bad
+                    firstAirDate: '2008-01-20'
+                    posterUrl: 'https://image.tmdb.org/t/p/w500/ggFHVNu6YYI5L9pCfOacjizRGt.jpg'
+                    rating: 9.5
+                    overview: 'A chemistry teacher diagnosed with inoperable lung cancer turns to manufacturing and selling methamphetamine.'
+                    genres:
+                      - id: 18
+                        name: Drama
+                      - id: 80
+                        name: Crime
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /media/tv/popular:
+    get:
+      tags: [TV Shows]
+      summary: Popular TV shows
+      description: >
+        Returns a paginated list of currently popular TV shows.
+        Popularity is determined by upstream trending and view data.
+        Results are ordered by popularity score descending.
+      operationId: getPopularTVShows
+      parameters:
+        - $ref: '#/components/parameters/pageParam'
+      responses:
+        '200':
+          description: A paginated list of popular TV shows
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TVShowListResponse'
+              example:
+                page: 1
+                totalPages: 20
+                totalResults: 400
+                results:
+                  - id: 94997
+                    title: House of the Dragon
+                    firstAirDate: '2022-08-21'
+                    posterUrl: 'https://image.tmdb.org/t/p/w500/z2yahl2uefxDCl0nogcRBstwruJ.jpg'
+                    rating: 8.4
+                    overview: 'The story of the House Targaryen set 200 years before the events of Game of Thrones.'
+                    genres:
+                      - id: 10765
+                        name: Sci-Fi & Fantasy
+                      - id: 18
+                        name: Drama
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /media/tv/{id}:
+    get:
+      tags: [TV Shows]
+      summary: TV show details
+      description: >
+        Returns full details for a single TV show by its ID.
+        Includes all fields needed to render a rich detail page:
+        poster, backdrop, synopsis, seasons, networks, genres, cast, and similar shows.
+      operationId: getTVShowById
+      parameters:
+        - $ref: '#/components/parameters/mediaIdParam'
+      responses:
+        '200':
+          description: Full details for the requested TV show
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TVShowDetail'
+              example:
+                id: 1396
+                title: Breaking Bad
+                overview: "A chemistry teacher diagnosed with inoperable lung cancer turns to manufacturing and selling methamphetamine in order to secure his family's future."
+                firstAirDate: '2008-01-20'
+                lastAirDate: '2013-09-29'
+                status: Ended
+                totalSeasons: 5
+                totalEpisodes: 62
+                averageEpisodeMinutes: 45
+                rating: 9.5
+                voteCount: 13500
+                posterUrl: 'https://image.tmdb.org/t/p/w500/ggFHVNu6YYI5L9pCfOacjizRGt.jpg'
+                backdropUrl: 'https://image.tmdb.org/t/p/original/tsRy63Mu5cu8etL1X7ZLyf7UP1M.jpg'
+                genres:
+                  - id: 18
+                    name: Drama
+                  - id: 80
+                    name: Crime
+                networks:
+                  - name: AMC
+                    logoUrl: 'https://image.tmdb.org/t/p/w92/alqLicR1ZMHMaZGP3xRQxn9sq7p.png'
+                seasons:
+                  - seasonNumber: 1
+                    episodeCount: 7
+                    airDate: '2008-01-20'
+                    posterUrl: 'https://image.tmdb.org/t/p/w500/1BP4xYv9ZG4ZVHkL7ocOziBbSYH.jpg'
+                cast:
+                  - name: Bryan Cranston
+                    character: Walter White
+                    profileUrl: 'https://image.tmdb.org/t/p/w185/7Jahy5LZX2Fo8fGJltMreAI49hC.jpg'
+                  - name: Aaron Paul
+                    character: Jesse Pinkman
+                    profileUrl: 'https://image.tmdb.org/t/p/w185/glEjyreZMVvkPmSe9G2n23BXZXR.jpg'
+                similar:
+                  - id: 60574
+                    title: Peaky Blinders
+                    firstAirDate: '2013-09-12'
+                    posterUrl: 'https://image.tmdb.org/t/p/w500/vUUqzWa2LnHIVqkaKVn3nyfVSBx.jpg'
+                    rating: 8.8
+                    overview: 'A gangster family epic set in 1919 Birmingham, England.'
+                    genres:
+                      - id: 80
+                        name: Crime
+                      - id: 18
+                        name: Drama
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+# ─────────────────────────────────────────────
+#  COMPONENTS
+# ─────────────────────────────────────────────
+components:
+  # ── Parameters ──────────────────────────────
+  parameters:
+    queryParam:
+      name: query
+      in: query
+      required: true
+      description: Title search string (partial matches supported)
+      schema:
+        type: string
+        minLength: 1
+        example: breaking bad
+
+    yearParam:
+      name: year
+      in: query
+      required: false
+      description: Filter by release year (movies) or first air year (TV shows)
+      schema:
+        type: integer
+        minimum: 1888
+        maximum: 2100
+        example: 2008
+
+    genreIdParam:
+      name: genreId
+      in: query
+      required: false
+      description: Filter by genre ID. See TMDB genre list for valid IDs (e.g. 18 = Drama, 28 = Action)
+      schema:
+        type: integer
+        example: 18
+
+    pageParam:
+      name: page
+      in: query
+      required: false
+      description: Page number for paginated results (1-indexed)
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+        example: 1
+
+    mediaIdParam:
+      name: id
+      in: path
+      required: true
+      description: Unique numeric identifier for the movie or TV show
+      schema:
+        type: integer
+        example: 550
+
+  # ── Reusable Responses ───────────────────────
+  responses:
+    BadRequest:
+      description: Missing or invalid query parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: Bad Request
+            message: "Query parameter 'query' is required and must not be empty."
+
+    NotFound:
+      description: No resource found for the given ID
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: Not Found
+            message: 'No movie found with id 99999.'
+
+    InternalError:
+      description: Unexpected server error (e.g. upstream service unavailable)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: Internal Server Error
+            message: 'An unexpected error occurred. Please try again later.'
+
+  # ── Schemas ─────────────────────────────────
+  schemas:
+    # -- Shared primitives ----------------------
+    Genre:
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          type: integer
+          description: Genre identifier
+          example: 18
+        name:
+          type: string
+          description: Genre label
+          example: Drama
+
+    CastMember:
+      type: object
+      required: [name, character]
+      properties:
+        name:
+          type: string
+          description: Actor's real name
+          example: Bryan Cranston
+        character:
+          type: string
+          description: Character name in the show or film
+          example: Walter White
+        profileUrl:
+          type: string
+          format: uri
+          nullable: true
+          description: Full URL to the actor's profile photo (null if unavailable)
+          example: 'https://image.tmdb.org/t/p/w185/7Jahy5LZX2Fo8fGJltMreAI49hC.jpg'
+
+    # -- Movie card (used in list responses) ----
+    MovieCard:
+      type: object
+      required: [id, title, releaseYear, posterUrl, rating, overview, genres]
+      properties:
+        id:
+          type: integer
+          description: Unique movie identifier
+          example: 550
+        title:
+          type: string
+          description: Movie title
+          example: Fight Club
+        releaseYear:
+          type: integer
+          description: Four-digit release year
+          example: 1999
+        posterUrl:
+          type: string
+          format: uri
+          nullable: true
+          description: Full URL to the poster image (null if unavailable)
+          example: 'https://image.tmdb.org/t/p/w500/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg'
+        rating:
+          type: number
+          format: float
+          description: Average user rating out of 10
+          minimum: 0
+          maximum: 10
+          example: 8.4
+        overview:
+          type: string
+          description: Short synopsis
+          example: 'An insomniac office worker and a devil-may-care soap maker form an underground fight club.'
+        genres:
+          type: array
+          description: List of genres associated with this movie
+          items:
+            $ref: '#/components/schemas/Genre'
+
+    # -- Movie detail (single movie response) ---
+    MovieDetail:
+      allOf:
+        - $ref: '#/components/schemas/MovieCard'
+        - type: object
+          required:
+            - tagline
+            - releaseDate
+            - runtimeMinutes
+            - voteCount
+            - backdropUrl
+            - status
+            - cast
+            - similar
+          properties:
+            tagline:
+              type: string
+              nullable: true
+              description: Marketing tagline for the film
+              example: 'Mischief. Mayhem. Soap.'
+            releaseDate:
+              type: string
+              format: date
+              description: Full release date (YYYY-MM-DD)
+              example: '1999-10-15'
+            runtimeMinutes:
+              type: integer
+              nullable: true
+              description: Total runtime in minutes
+              example: 139
+            voteCount:
+              type: integer
+              description: Number of user ratings submitted
+              example: 26280
+            backdropUrl:
+              type: string
+              format: uri
+              nullable: true
+              description: Full URL to the backdrop/banner image (null if unavailable)
+              example: 'https://image.tmdb.org/t/p/original/fCayJrkfRaCRCTh8GqN30f8oyQF.jpg'
+            status:
+              type: string
+              description: Release status of the movie
+              enum: [Released, 'In Production', 'Post Production', Planned, Cancelled]
+              example: Released
+            cast:
+              type: array
+              description: Top-billed cast members (up to 10)
+              items:
+                $ref: '#/components/schemas/CastMember'
+            similar:
+              type: array
+              description: Movies with similar themes or genres (up to 6)
+              items:
+                $ref: '#/components/schemas/MovieCard'
+
+    # -- TV show card (used in list responses) --
+    TVShowCard:
+      type: object
+      required: [id, title, firstAirDate, posterUrl, rating, overview, genres]
+      properties:
+        id:
+          type: integer
+          description: Unique TV show identifier
+          example: 1396
+        title:
+          type: string
+          description: Show title
+          example: Breaking Bad
+        firstAirDate:
+          type: string
+          format: date
+          description: Date the show first aired (YYYY-MM-DD)
+          example: '2008-01-20'
+        posterUrl:
+          type: string
+          format: uri
+          nullable: true
+          description: Full URL to the poster image (null if unavailable)
+          example: 'https://image.tmdb.org/t/p/w500/ggFHVNu6YYI5L9pCfOacjizRGt.jpg'
+        rating:
+          type: number
+          format: float
+          description: Average user rating out of 10
+          minimum: 0
+          maximum: 10
+          example: 9.5
+        overview:
+          type: string
+          description: Short synopsis
+          example: 'A chemistry teacher turns to manufacturing methamphetamine.'
+        genres:
+          type: array
+          description: List of genres associated with this show
+          items:
+            $ref: '#/components/schemas/Genre'
+
+    # -- TV show season summary -----------------
+    SeasonSummary:
+      type: object
+      required: [seasonNumber, episodeCount, airDate]
+      properties:
+        seasonNumber:
+          type: integer
+          description: Season number (1-indexed)
+          example: 1
+        episodeCount:
+          type: integer
+          description: Number of episodes in this season
+          example: 7
+        airDate:
+          type: string
+          format: date
+          nullable: true
+          description: Date the season premiered (YYYY-MM-DD)
+          example: '2008-01-20'
+        posterUrl:
+          type: string
+          format: uri
+          nullable: true
+          description: Season-specific poster (null if unavailable)
+          example: 'https://image.tmdb.org/t/p/w500/1BP4xYv9ZG4ZVHkL7ocOziBbSYH.jpg'
+
+    # -- TV network summary ---------------------
+    NetworkSummary:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          description: Network name
+          example: AMC
+        logoUrl:
+          type: string
+          format: uri
+          nullable: true
+          description: Full URL to the network logo (null if unavailable)
+          example: 'https://image.tmdb.org/t/p/w92/alqLicR1ZMHMaZGP3xRQxn9sq7p.png'
+
+    # -- TV show detail (single show response) --
+    TVShowDetail:
+      allOf:
+        - $ref: '#/components/schemas/TVShowCard'
+        - type: object
+          required:
+            - lastAirDate
+            - status
+            - totalSeasons
+            - totalEpisodes
+            - averageEpisodeMinutes
+            - voteCount
+            - backdropUrl
+            - networks
+            - seasons
+            - cast
+            - similar
+          properties:
+            lastAirDate:
+              type: string
+              format: date
+              nullable: true
+              description: Date the most recent episode aired (YYYY-MM-DD); null if still airing
+              example: '2013-09-29'
+            status:
+              type: string
+              description: Current airing status of the show
+              enum: [Returning Series, Ended, Cancelled, 'In Production', Planned]
+              example: Ended
+            totalSeasons:
+              type: integer
+              description: Total number of seasons
+              example: 5
+            totalEpisodes:
+              type: integer
+              description: Total number of episodes across all seasons
+              example: 62
+            averageEpisodeMinutes:
+              type: integer
+              nullable: true
+              description: Average episode runtime in minutes
+              example: 45
+            voteCount:
+              type: integer
+              description: Number of user ratings submitted
+              example: 13500
+            backdropUrl:
+              type: string
+              format: uri
+              nullable: true
+              description: Full URL to the backdrop/banner image (null if unavailable)
+              example: 'https://image.tmdb.org/t/p/original/tsRy63Mu5cu8etL1X7ZLyf7UP1M.jpg'
+            networks:
+              type: array
+              description: Networks that aired or stream the show
+              items:
+                $ref: '#/components/schemas/NetworkSummary'
+            seasons:
+              type: array
+              description: Season-level summaries (excludes specials)
+              items:
+                $ref: '#/components/schemas/SeasonSummary'
+            cast:
+              type: array
+              description: Top-billed cast members (up to 10)
+              items:
+                $ref: '#/components/schemas/CastMember'
+            similar:
+              type: array
+              description: TV shows with similar themes or genres (up to 6)
+              items:
+                $ref: '#/components/schemas/TVShowCard'
+
+    # -- Pagination wrapper ---------------------
+    PaginationMeta:
+      type: object
+      required: [page, totalPages, totalResults]
+      properties:
+        page:
+          type: integer
+          description: Current page number (1-indexed)
+          example: 1
+        totalPages:
+          type: integer
+          description: Total number of available pages
+          example: 4
+        totalResults:
+          type: integer
+          description: Total number of results across all pages
+          example: 72
+
+    MovieListResponse:
+      allOf:
+        - $ref: '#/components/schemas/PaginationMeta'
+        - type: object
+          required: [results]
+          properties:
+            results:
+              type: array
+              items:
+                $ref: '#/components/schemas/MovieCard'
+
+    TVShowListResponse:
+      allOf:
+        - $ref: '#/components/schemas/PaginationMeta'
+        - type: object
+          required: [results]
+          properties:
+            results:
+              type: array
+              items:
+                $ref: '#/components/schemas/TVShowCard'
+
+    # -- Error response -------------------------
+    ErrorResponse:
+      type: object
+      required: [error, message]
+      properties:
+        error:
+          type: string
+          description: Short error category
+          example: Not Found
+        message:
+          type: string
+          description: Human-readable description of what went wrong
+          example: 'No movie found with id 99999.'
+
+    # -- Health response ------------------------
+    HealthResponse:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          example: OK
