@@ -147,3 +147,11 @@ We will try our best! Nos podemos! Si nos podamos!
 - Deleted the hello routes, along with the testing and updated the OpenAPI.yaml to reflect these changes
 
 - Luke put these notes into meetings.md
+
+# Group 6 2026-04-16
+
+**Modality: In Person**
+
+**In attendance: Luke, Jayda, Connor, John**
+**Notes taker: **
+**Meeting Manager: **
