@@ -153,5 +153,15 @@ We will try our best! Nos podemos! Si nos podamos!
 **Modality: In Person**
 
 **In attendance: Luke, Jayda, Connor, John**
-**Notes taker: **
-**Meeting Manager: **
+**Notes taker: Jayda Minks **
+**Meeting Manager: Luke Willis **
+
+- We decided that our route prefix will be /media
+
+- Changed our yaml to reflect our schema.
+
+- Connor and Jayda will work on movies.
+
+- Luke and John will do TV shows.
+
+- Claude will be used for testing.
