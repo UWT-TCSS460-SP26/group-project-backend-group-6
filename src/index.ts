@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import { app } from './app';
 
+console.log('API KEY loaded:', !!process.env.TMDB_API_KEY);
 const PORT = parseInt(process.env.PORT || '3000', 10);
 
 app.listen(PORT, () => {
