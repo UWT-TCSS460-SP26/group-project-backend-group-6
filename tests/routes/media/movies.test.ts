@@ -1,6 +1,6 @@
 import request from 'supertest';
 import { app } from '../../../src/app';
-import { resetGenreCache } from '../../../src/controllers/media/movies.controller';
+import { resetGenreCache } from '../../../src/controllers/media/movies';
 
 const mockFetchSequence = (
   ...responses: Array<{ ok: boolean; status: number; json: () => Promise<unknown> }>

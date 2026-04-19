@@ -3,7 +3,7 @@ import {
     searchMovies,
     getMovieDetails,
     getPopularMovies,
-} from '../../controllers/media/movies.controller';
+} from '../../controllers/media/movies';
 import {
     requireEnvVar,
     requireSearchQuery,
@@ -16,6 +16,5 @@ export const moviesRouter = Router();
 moviesRouter.use(requireEnvVar('TMDB_API_KEY'));
 
 moviesRouter.get('/', requireSearchQuery, searchMovies);
-moviesRouter.get('/search', requireSearchQuery, searchMovies);
 moviesRouter.get('/popular', getPopularMovies);
 moviesRouter.get('/:id', validateNumericId, getMovieDetails);

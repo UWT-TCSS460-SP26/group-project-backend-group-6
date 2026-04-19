@@ -5,7 +5,7 @@ import fs from 'fs';
 import path from 'path';
 import YAML from 'yaml';
 import { apiReference } from '@scalar/express-api-reference';
-import { moviesRouter } from './routes/media/movies.router'; // ADD
+import { moviesRouter } from './routes/media/movies'; // ADD
 
 const app = express();
 
