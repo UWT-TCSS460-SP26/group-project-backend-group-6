@@ -3,6 +3,7 @@ import cors from 'cors';
 import fs from 'fs';
 import YAML from 'yaml';
 import { apiReference } from '@scalar/express-api-reference';
+import { tvRouter } from './routes/media/tv';
 
 const app = express();
 
@@ -22,6 +23,7 @@ app.use('/api-docs', apiReference({ spec: { url: '/openapi.json' } }));
 app.get('/health', (_request: Request, response: Response) => {
   response.json({ status: 'OK' });
 });
+app.use('/media', tvRouter);
 
 // 404 handler — must be after all routes
 app.use((_request: Request, response: Response) => {
