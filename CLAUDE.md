@@ -25,6 +25,7 @@ This is a stateless Express 5 + TypeScript REST API that acts as a proxy for [Th
 **Request flow:** Client → Express middleware (CORS, JSON body parsing) → Route-level validation middleware → Controller → TMDB API call → transformed response → Client
 
 **Entry points:**
+
 - `src/index.ts` — loads `.env`, starts Express on `PORT` (default 3000)
 - `src/app.ts` — sets up middleware, mounts routes, serves OpenAPI docs at `/api-docs` via Scalar
 
@@ -37,10 +38,10 @@ This is a stateless Express 5 + TypeScript REST API that acts as a proxy for [Th
 
 ## Environment Variables
 
-| Variable      | Required | Description                                      |
-|---------------|----------|--------------------------------------------------|
-| `PORT`        | No       | Server port (default: `3000`)                    |
-| `TMDB_API_KEY`| Yes      | TMDB API key; used in every movie/TV controller  |
+| Variable       | Required | Description                                     |
+| -------------- | -------- | ----------------------------------------------- |
+| `PORT`         | No       | Server port (default: `3000`)                   |
+| `TMDB_API_KEY` | Yes      | TMDB API key; used in every movie/TV controller |
 
 Copy `.env.example` to `.env` and add your TMDB API key.
 

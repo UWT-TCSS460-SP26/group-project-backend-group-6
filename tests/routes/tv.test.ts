@@ -58,8 +58,16 @@ const TMDB_DETAIL_RESPONSE = {
   ],
   credits: {
     cast: [
-      { name: 'Bryan Cranston', character: 'Walter White', profile_path: '/7Jahy5LZX2Fo8fGJltMreAI49hC.jpg' },
-      { name: 'Aaron Paul', character: 'Jesse Pinkman', profile_path: '/glEjyreZMVvkPmSe9G2n23BXZXR.jpg' },
+      {
+        name: 'Bryan Cranston',
+        character: 'Walter White',
+        profile_path: '/7Jahy5LZX2Fo8fGJltMreAI49hC.jpg',
+      },
+      {
+        name: 'Aaron Paul',
+        character: 'Jesse Pinkman',
+        profile_path: '/glEjyreZMVvkPmSe9G2n23BXZXR.jpg',
+      },
     ],
   },
 };
@@ -192,9 +200,7 @@ describe('GET /media/tv', () => {
   });
 
   it('propagates TMDB error status and message', async () => {
-    mockFetch.mockResolvedValueOnce(
-      mockRes({ status_message: 'Invalid API key.' }, 401)
-    );
+    mockFetch.mockResolvedValueOnce(mockRes({ status_message: 'Invalid API key.' }, 401));
 
     const res = await request(app).get('/media/tv').query({ query: 'breaking bad' });
 
@@ -441,11 +447,16 @@ describe('GET /media/tv/:id', () => {
   });
 
   it('propagates TMDB error status and message', async () => {
-    mockFetch.mockResolvedValueOnce(mockRes({ status_message: 'The resource could not be found.' }, 404));
+    mockFetch.mockResolvedValueOnce(
+      mockRes({ status_message: 'The resource could not be found.' }, 404)
+    );
 
     const res = await request(app).get('/media/tv/99999');
 
     expect(res.status).toBe(404);
-    expect(res.body).toMatchObject({ error: 'TMDB Error', message: 'The resource could not be found.' });
+    expect(res.body).toMatchObject({
+      error: 'TMDB Error',
+      message: 'The resource could not be found.',
+    });
   });
 });
