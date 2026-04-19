@@ -1,14 +1,6 @@
 import { Router } from 'express';
-import {
-    searchMovies,
-    getMovieDetails,
-    getPopularMovies,
-} from '../../controllers/media/movies';
-import {
-    requireEnvVar,
-    requireSearchQuery,
-    validateNumericId,
-} from '../../middleware/validation';
+import { searchMovies, getMovieDetails, getPopularMovies } from '../../controllers/media/movies';
+import { requireEnvVar, requireSearchQuery, validateNumericId } from '../../middleware/validation';
 
 export const moviesRouter = Router();
 

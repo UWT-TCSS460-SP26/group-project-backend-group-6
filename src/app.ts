@@ -16,18 +16,18 @@ const specPath = path.resolve(process.cwd(), 'openapi.yaml');
 const specFile = fs.readFileSync(specPath, 'utf8');
 const spec = YAML.parse(specFile);
 app.get('/openapi.json', (_request: Request, response: Response) => {
-    response.json(spec);
+  response.json(spec);
 });
 app.use('/api-docs', apiReference({ spec: { url: '/openapi.json' } }));
 
 app.get('/health', (_request: Request, response: Response) => {
-    response.json({ status: 'OK' });
+  response.json({ status: 'OK' });
 });
 
 app.use('/media/movies', moviesRouter); // ADD
 
 app.use((_request: Request, response: Response) => {
-    response.status(404).json({ error: 'Route not found' });
+  response.status(404).json({ error: 'Route not found' });
 });
 
 export { app };
