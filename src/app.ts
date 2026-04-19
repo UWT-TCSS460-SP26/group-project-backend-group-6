@@ -6,6 +6,7 @@ import path from 'path';
 import YAML from 'yaml';
 import { apiReference } from '@scalar/express-api-reference';
 import { moviesRouter } from './routes/media/movies';
+import { tvRouter } from './routes/media/tv';
 
 const app = express();
 
@@ -23,6 +24,7 @@ app.use('/api-docs', apiReference({ spec: { url: '/openapi.json' } }));
 app.get('/health', (_request: Request, response: Response) => {
   response.json({ status: 'OK' });
 });
+app.use('/media', tvRouter);
 
 app.use('/media/movies', moviesRouter);
 

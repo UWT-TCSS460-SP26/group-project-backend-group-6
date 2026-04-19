@@ -24,14 +24,13 @@ export const validateNumericId = (request: Request, response: Response, next: Ne
 };
 
 /**
- * Validates that a required environment variable is configured.
+ * Returns middleware that blocks the route if the given environment variable is not set.
  */
-export const requireEnvVar = (envVar: string) => {
-  return (_request: Request, response: Response, next: NextFunction) => {
-    if (!process.env[envVar]) {
-      response.status(500).json({ error: `${envVar} is not configured` });
+export const requireEnvVar =
+  (name: string) => (_request: Request, response: Response, next: NextFunction) => {
+    if (!process.env[name]) {
+      response.status(503).json({ error: `Server misconfiguration: missing env var ${name}` });
       return;
     }
     next();
   };
-};
