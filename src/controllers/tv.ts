@@ -25,7 +25,7 @@ export const searchTV = async (request: Request, response: Response) => {
 
   try {
     const url = new URL(`${BASE_URL}/search/tv`);
-    url.searchParams.set('api_key', apiKey!);
+    url.searchParams.set('api_key', String(apiKey));
     url.searchParams.set('query', String(query));
     if (year) url.searchParams.set('first_air_date_year', String(year));
     if (page) url.searchParams.set('page', String(page));
@@ -158,7 +158,7 @@ export const getPopularTV = async (request: Request, response: Response) => {
 
   try {
     const url = new URL(`${BASE_URL}/tv/popular`);
-    url.searchParams.set('api_key', apiKey!);
+    url.searchParams.set('api_key', String(apiKey));
     if (page) url.searchParams.set('page', String(page));
 
     const result = await fetch(url.toString());

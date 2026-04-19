@@ -11,7 +11,7 @@ const mockRes = (body: unknown, status = 200) =>
     ok: status >= 200 && status < 300,
     status,
     json: () => Promise.resolve(body),
-  } as Response);
+  } as unknown as Response);
 
 // ─── Fixtures ─────────────────────────────────────────────────────────────────
 
