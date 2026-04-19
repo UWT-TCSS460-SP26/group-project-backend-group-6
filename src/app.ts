@@ -5,7 +5,7 @@ import fs from 'fs';
 import path from 'path';
 import YAML from 'yaml';
 import { apiReference } from '@scalar/express-api-reference';
-import { moviesRouter } from './routes/media/movies'; // ADD
+import { moviesRouter } from './routes/media/movies';
 
 const app = express();
 
@@ -24,7 +24,7 @@ app.get('/health', (_request: Request, response: Response) => {
   response.json({ status: 'OK' });
 });
 
-app.use('/media/movies', moviesRouter); // ADD
+app.use('/media/movies', moviesRouter);
 
 app.use((_request: Request, response: Response) => {
   response.status(404).json({ error: 'Route not found' });
