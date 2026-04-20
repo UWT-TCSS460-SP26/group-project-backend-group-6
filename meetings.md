@@ -174,10 +174,20 @@ We will try our best! Nos podemos! Si nos podamos!
 **Notes taker: Jayda**
 **Meeting Manager: Luke**
 
--	Merged our branches to main 
+- Reviewed implementations of TV and Movie transformed routes
 
--	Fixed conflicts and linting issues
+-	Merged our branches to main
 
--	Tested routes with different queries 
+-	Had some issues with linting, but those were all solved (possibly broken by this markdown push)
 
--	Planned for meeting on Monday tomorrow at 4:30pm 
+-	Fixed ^
+
+-	Tested all routes with different queries
+
+-	Deployed onto Render and tested routes to render through Postman
+
+-	Briefly discussed checkoff due today
+
+-	Started to discuss Sprint 2
+
+-	Planned sprint standup meeting for Monday (tomorrow) at 4:30pm (no more than 5 minutes)
