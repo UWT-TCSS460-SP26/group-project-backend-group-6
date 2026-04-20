@@ -165,3 +165,19 @@ We will try our best! Nos podemos! Si nos podamos!
 - Luke and John will do TV shows.
 
 - Claude will be used for testing.
+
+# Group 6 2026-04-19 Sprint 1 Meeting 2 (4:30pm - 5:30pm)
+
+**Modality: Discord**
+
+**In attendance: Luke, Jayda, Connor, John**
+**Notes taker: Jayda**
+**Meeting Manager: Luke**
+
+-	Merged our branches to main 
+
+-	Fixed conflicts and linting issues
+
+-	Tested routes with different queries 
+
+-	Planned for meeting on Monday tomorrow at 4:30pm 
