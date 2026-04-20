@@ -1,7 +1,7 @@
 /// <reference types="jest" />
 import request from 'supertest';
-import { app } from '../../../src/app';
-import { resetGenreCache } from '../../../src/controllers/media/movies';
+import { app } from '../../src/app';
+import { resetGenreCache } from '../../src/controllers/media/movies';
 
 const mockFetchSequence = (
   ...responses: Array<{ ok: boolean; status: number; json: () => Promise<unknown> }>
@@ -16,11 +16,15 @@ const mockFetchSequence = (
 };
 
 describe('Movies Router', () => {
+  let originalTmdbKey: string | undefined;
+
   beforeEach(() => {
+    originalTmdbKey = process.env.TMDB_API_KEY;
     resetGenreCache();
   });
 
   afterEach(() => {
+    process.env.TMDB_API_KEY = originalTmdbKey;
     jest.restoreAllMocks();
   });
 
@@ -32,15 +36,12 @@ describe('Movies Router', () => {
       expect(response.body.error).toContain('query');
     });
 
-    it('should return 500 if TMDB_API_KEY is not set', async () => {
-      const apiKey = process.env.TMDB_API_KEY;
+    it('should return 503 if TMDB_API_KEY is not set', async () => {
       delete process.env.TMDB_API_KEY;
 
       const response = await request(app).get('/media/movies?query=Inception');
-      expect(response.status).toBe(500);
+      expect(response.status).toBe(503);
       expect(response.body).toHaveProperty('error');
-
-      process.env.TMDB_API_KEY = apiKey;
     });
 
     it('should return 200 with search results when query is provided', async () => {
@@ -155,15 +156,12 @@ describe('Movies Router', () => {
   });
 
   describe('GET /media/movies/popular', () => {
-    it('should return 500 if TMDB_API_KEY is not set', async () => {
-      const apiKey = process.env.TMDB_API_KEY;
+    it('should return 503 if TMDB_API_KEY is not set', async () => {
       delete process.env.TMDB_API_KEY;
 
       const response = await request(app).get('/media/movies/popular');
-      expect(response.status).toBe(500);
+      expect(response.status).toBe(503);
       expect(response.body).toHaveProperty('error');
-
-      process.env.TMDB_API_KEY = apiKey;
     });
 
     it('should return 200 with popular movies', async () => {
@@ -246,15 +244,12 @@ describe('Movies Router', () => {
       expect(response.body).toHaveProperty('error');
     });
 
-    it('should return 500 if TMDB_API_KEY is not set', async () => {
-      const apiKey = process.env.TMDB_API_KEY;
+    it('should return 503 if TMDB_API_KEY is not set', async () => {
       delete process.env.TMDB_API_KEY;
 
       const response = await request(app).get('/media/movies/27205');
-      expect(response.status).toBe(500);
+      expect(response.status).toBe(503);
       expect(response.body).toHaveProperty('error');
-
-      process.env.TMDB_API_KEY = apiKey;
     });
 
     it('should return 200 with movie details', async () => {
