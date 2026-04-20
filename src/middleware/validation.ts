@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 
 /**
- * Validates that the 'query' search parameter is present.
+ * Validates that the 'query' search parameter is present for media search.
  */
 export const requireSearchQuery = (request: Request, response: Response, next: NextFunction) => {
   if (!request.query.query) {
