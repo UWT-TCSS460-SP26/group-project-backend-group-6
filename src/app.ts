@@ -7,11 +7,13 @@ import YAML from 'yaml';
 import { apiReference } from '@scalar/express-api-reference';
 import { moviesRouter } from './routes/media/movies';
 import { tvRouter } from './routes/media/tv';
+import devAuthRouter from './routes/devAuth';
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
+app.use('/auth', devAuthRouter);
 
 const specPath = path.resolve(process.cwd(), 'openapi.yaml');
 const specFile = fs.readFileSync(specPath, 'utf8');
