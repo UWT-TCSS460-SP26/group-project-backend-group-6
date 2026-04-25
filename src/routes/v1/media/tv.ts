@@ -1,6 +1,10 @@
 import { Router } from 'express';
-import { searchTV, getTVDetails, getPopularTV } from '../../controllers/tv';
-import { requireEnvVar, requireSearchQuery, validateNumericId } from '../../middleware/validation';
+import { searchTV, getTVDetails, getPopularTV } from '../../../controllers/v1/media/tv';
+import {
+  requireEnvVar,
+  requireSearchQuery,
+  validateNumericId,
+} from '../../../middleware/validation';
 
 export const tvRouter = Router();
 

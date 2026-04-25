@@ -121,11 +121,11 @@ const transformMovieDetail = async (data: Record<string, unknown>) => ({
 });
 
 export const searchMovies = async (request: Request, response: Response) => {
-  const { query, year, genreId, page } = request.query;
+  const { title, year, genreId, page } = request.query;
 
   try {
     const url = buildTmdbUrl('/search/movie', {
-      query: String(query),
+      query: String(title),
       year: year ? String(year) : undefined,
       page: page ? Number(page) : 1,
       language: 'en-US',
