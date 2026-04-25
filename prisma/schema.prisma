@@ -1,0 +1,66 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  user
+  admin
+}
+
+enum MediaType {
+  movie
+  tv
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  username  String   @unique
+  role      Role     @default(user)
+  createdAt DateTime @default(now())
+
+  ratings Rating[]
+  reviews Review[]
+}
+
+model Rating {
+  id        Int       @id @default(autoincrement())
+  score     Int       // recommend 1–10
+  tmdbId    Int
+  mediaType MediaType
+  userId    Int
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, tmdbId, mediaType]) // one rating per user per content
+  @@index([tmdbId, mediaType])          // makes public GETs fast
+}
+
+model Review {
+  id        Int       @id @default(autoincrement())
+  title     String?   // optional
+  body      String
+  tmdbId    Int
+  mediaType MediaType
+  userId    Int
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([tmdbId, mediaType])
+}
