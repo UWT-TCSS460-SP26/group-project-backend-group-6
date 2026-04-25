@@ -56,7 +56,7 @@ paths:
         title, and release year. For full details, use GET /media/movies/{id}.
       operationId: searchMovies
       parameters:
-        - $ref: '#/components/parameters/queryParam'
+        - $ref: '#/components/parameters/movieTitleParam'
         - $ref: '#/components/parameters/yearParam'
         - $ref: '#/components/parameters/genreIdParam'
         - $ref: '#/components/parameters/pageParam'
@@ -191,7 +191,7 @@ paths:
         title, and first air date. For full details, use GET /media/tv/{id}.
       operationId: searchTVShows
       parameters:
-        - $ref: '#/components/parameters/queryParam'
+        - $ref: '#/components/parameters/tvTitleParam'
         - $ref: '#/components/parameters/yearParam'
         - $ref: '#/components/parameters/genreIdParam'
         - $ref: '#/components/parameters/pageParam'
@@ -330,7 +330,7 @@ paths:
 components:
   # ── Parameters ──────────────────────────────
   parameters:
-    queryParam:
+    movieTitleParam:
       name: title
       in: query
       required: true
@@ -339,6 +339,16 @@ components:
         type: string
         minLength: 1
         example: Interstellar
+
+    tvTitleParam:
+      name: title
+      in: query
+      required: true
+      description: Title search string (partial matches supported)
+      schema:
+        type: string
+        minLength: 1
+        example: Breaking Bad
 
     yearParam:
       name: year
@@ -390,7 +400,7 @@ components:
             $ref: '#/components/schemas/ErrorResponse'
           example:
             error: Bad Request
-            message: "Query parameter 'query' is required and must not be empty."
+            message: "Query parameter 'title' is required and must not be empty."
 
     NotFound:
       description: No resource found for the given ID
