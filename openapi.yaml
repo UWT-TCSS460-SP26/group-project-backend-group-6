@@ -28,24 +28,6 @@ tags:
 # ─────────────────────────────────────────────
 paths:
   # ── General ─────────────────────────────────
-  /hello:
-    get:
-      tags: [General]
-      summary: Hello
-      description: Returns a greeting message.
-      operationId: getHello
-      responses:
-        '200':
-          description: A greeting message
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: 'Hello, TCSS 460!'
-
   /health:
     get:
       tags: [General]
@@ -349,14 +331,14 @@ components:
   # ── Parameters ──────────────────────────────
   parameters:
     queryParam:
-      name: query
+      name: title
       in: query
       required: true
       description: Title search string (partial matches supported)
       schema:
         type: string
         minLength: 1
-        example: breaking bad
+        example: Interstellar
 
     yearParam:
       name: year
@@ -367,7 +349,7 @@ components:
         type: integer
         minimum: 1888
         maximum: 2100
-        example: 2008
+        example: 2014
 
     genreIdParam:
       name: genreId
@@ -376,7 +358,7 @@ components:
       description: Filter by genre ID. See TMDB genre list for valid IDs (e.g. 18 = Drama, 28 = Action)
       schema:
         type: integer
-        example: 18
+        example: 878
 
     pageParam:
       name: page
@@ -396,7 +378,7 @@ components:
       description: Unique numeric identifier for the movie or TV show
       schema:
         type: integer
-        example: 550
+        example: 157336
 
   # ── Reusable Responses ───────────────────────
   responses:

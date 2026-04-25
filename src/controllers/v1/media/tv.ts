@@ -20,13 +20,13 @@ const serverError = (response: Response) =>
  * Transformed proxy — searches TMDB for TV shows and returns a curated schema.
  */
 export const searchTV = async (request: Request, response: Response) => {
-  const { query, year, genreId, page } = request.query;
+  const { title, year, genreId, page } = request.query;
   const apiKey = process.env.TMDB_API_KEY;
 
   try {
     const url = new URL(`${BASE_URL}/search/tv`);
     url.searchParams.set('api_key', String(apiKey));
-    url.searchParams.set('query', String(query));
+    url.searchParams.set('query', String(title));
     if (year) url.searchParams.set('first_air_date_year', String(year));
     if (page) url.searchParams.set('page', String(page));
 

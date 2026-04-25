@@ -5,8 +5,8 @@ import fs from 'fs';
 import path from 'path';
 import YAML from 'yaml';
 import { apiReference } from '@scalar/express-api-reference';
-import { moviesRouter } from './routes/media/movies';
-import { tvRouter } from './routes/media/tv';
+import { moviesRouter } from './routes/v1/media/movies';
+import { tvRouter } from './routes/v1/media/tv';
 
 const app = express();
 
