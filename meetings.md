@@ -176,18 +176,18 @@ We will try our best! Nos podemos! Si nos podamos!
 
 - Reviewed implementations of TV and Movie transformed routes
 
--	Merged our branches to main
+- Merged our branches to main
 
--	Had some issues with linting, but those were all solved (possibly broken by this markdown push)
+- Had some issues with linting, but those were all solved (possibly broken by this markdown push)
 
--	Fixed ^
+- Fixed ^
 
--	Tested all routes with different queries
+- Tested all routes with different queries
 
--	Deployed onto Render and tested routes to render through Postman
+- Deployed onto Render and tested routes to render through Postman
 
--	Briefly discussed checkoff due today
+- Briefly discussed checkoff due today
 
--	Started to discuss Sprint 2
+- Started to discuss Sprint 2
 
--	Planned sprint standup meeting for Monday (tomorrow) at 4:30pm (no more than 5 minutes)
+- Planned sprint standup meeting for Monday (tomorrow) at 4:30pm (no more than 5 minutes)
