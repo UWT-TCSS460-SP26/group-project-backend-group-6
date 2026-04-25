@@ -5,10 +5,9 @@ import fs from 'fs';
 import path from 'path';
 import YAML from 'yaml';
 import { apiReference } from '@scalar/express-api-reference';
-import { moviesRouter } from './routes/media/movies';
-import { tvRouter } from './routes/media/tv';
+import { moviesRouter } from './routes/v1/media/movies';
+import { tvRouter } from './routes/v1/media/tv';
 import devAuthRouter from './routes/devAuth';
-
 const app = express();
 
 app.use(cors());
@@ -26,9 +25,9 @@ app.use('/api-docs', apiReference({ spec: { url: '/openapi.json' } }));
 app.get('/health', (_request: Request, response: Response) => {
   response.json({ status: 'OK' });
 });
-app.use('/media', tvRouter);
+app.use('/v1/media', tvRouter);
 
-app.use('/media/movies', moviesRouter);
+app.use('/v1/media/movies', moviesRouter);
 
 app.use((_request: Request, response: Response) => {
   response.status(404).json({ error: 'Route not found' });

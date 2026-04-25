@@ -1,11 +1,11 @@
 import { Request, Response, NextFunction } from 'express';
 
 /**
- * Validates that the 'query' search parameter is present for media search.
+ * Validates that the 'title' search parameter is present for media search.
  */
 export const requireSearchQuery = (request: Request, response: Response, next: NextFunction) => {
-  if (!request.query.query) {
-    response.status(400).json({ error: 'Missing required query parameter: query' });
+  if (!request.query.title) {
+    response.status(400).json({ error: 'Missing required query parameter: title' });
     return;
   }
   next();
