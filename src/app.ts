@@ -24,9 +24,9 @@ app.use('/api-docs', apiReference({ spec: { url: '/openapi.json' } }));
 app.get('/health', (_request: Request, response: Response) => {
   response.json({ status: 'OK' });
 });
-app.use('/media', tvRouter);
+app.use('/v1/media', tvRouter);
 
-app.use('/media/movies', moviesRouter);
+app.use('/v1/media/movies', moviesRouter);
 
 app.use((_request: Request, response: Response) => {
   response.status(404).json({ error: 'Route not found' });

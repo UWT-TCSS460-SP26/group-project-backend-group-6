@@ -28,18 +28,18 @@ describe('Movies Router', () => {
     jest.restoreAllMocks();
   });
 
-  describe('GET /media/movies', () => {
+  describe('GET /v1/media/movies', () => {
     it('should return 400 if query parameter is missing', async () => {
-      const response = await request(app).get('/media/movies');
+      const response = await request(app).get('/v1/media/movies');
       expect(response.status).toBe(400);
       expect(response.body).toHaveProperty('error');
-      expect(response.body.error).toContain('query');
+      expect(response.body.error).toContain('title');
     });
 
     it('should return 503 if TMDB_API_KEY is not set', async () => {
       delete process.env.TMDB_API_KEY;
 
-      const response = await request(app).get('/media/movies?query=Inception');
+      const response = await request(app).get('/v1/media/movies?title=Inception');
       expect(response.status).toBe(503);
       expect(response.body).toHaveProperty('error');
     });
@@ -80,7 +80,7 @@ describe('Movies Router', () => {
         }
       );
 
-      const response = await request(app).get('/media/movies').query({ query: 'Inception' });
+      const response = await request(app).get('/v1/media/movies').query({ title: 'Inception' });
 
       expect(response.status).toBe(200);
       expect(response.body).toHaveProperty('page', 1);
@@ -123,8 +123,8 @@ describe('Movies Router', () => {
       );
 
       const response = await request(app)
-        .get('/media/movies')
-        .query({ query: 'Inception', year: 2010 });
+        .get('/v1/media/movies')
+        .query({ title: 'Inception', year: 2010 });
 
       expect(response.status).toBe(200);
       expect(global.fetch).toHaveBeenCalled();
@@ -139,7 +139,7 @@ describe('Movies Router', () => {
         json: () => Promise.resolve({ status_message: 'Invalid API key' }),
       });
 
-      const response = await request(app).get('/media/movies').query({ query: 'Inception' });
+      const response = await request(app).get('/v1/media/movies').query({ title: 'Inception' });
 
       expect(response.status).toBe(401);
       expect(response.body).toHaveProperty('error');
@@ -148,18 +148,18 @@ describe('Movies Router', () => {
     it('should handle fetch errors', async () => {
       global.fetch = jest.fn(() => Promise.reject(new Error('Network error'))) as jest.Mock;
 
-      const response = await request(app).get('/media/movies').query({ query: 'Inception' });
+      const response = await request(app).get('/v1/media/movies').query({ title: 'Inception' });
 
       expect(response.status).toBe(502);
       expect(response.body.error).toContain('Failed to reach TMDB');
     });
   });
 
-  describe('GET /media/movies/popular', () => {
+  describe('GET /v1/media/movies/popular', () => {
     it('should return 503 if TMDB_API_KEY is not set', async () => {
       delete process.env.TMDB_API_KEY;
 
-      const response = await request(app).get('/media/movies/popular');
+      const response = await request(app).get('/v1/media/movies/popular');
       expect(response.status).toBe(503);
       expect(response.body).toHaveProperty('error');
     });
@@ -199,7 +199,7 @@ describe('Movies Router', () => {
         }
       );
 
-      const response = await request(app).get('/media/movies/popular');
+      const response = await request(app).get('/v1/media/movies/popular');
 
       expect(response.status).toBe(200);
       expect(response.body).toHaveProperty('page', 1);
@@ -223,23 +223,23 @@ describe('Movies Router', () => {
     it('should handle fetch errors', async () => {
       global.fetch = jest.fn(() => Promise.reject(new Error('Network error'))) as jest.Mock;
 
-      const response = await request(app).get('/media/movies/popular');
+      const response = await request(app).get('/v1/media/movies/popular');
 
       expect(response.status).toBe(502);
       expect(response.body.error).toContain('Failed to reach TMDB');
     });
   });
 
-  describe('GET /media/movies/:id', () => {
+  describe('GET /v1/media/movies/:id', () => {
     it('should return 400 if id is not a positive integer', async () => {
-      const response = await request(app).get('/media/movies/invalid');
+      const response = await request(app).get('/v1/media/movies/invalid');
       expect(response.status).toBe(400);
       expect(response.body).toHaveProperty('error');
       expect(response.body.error).toContain('positive integer');
     });
 
     it('should return 400 if id is zero or negative', async () => {
-      const response = await request(app).get('/media/movies/0');
+      const response = await request(app).get('/v1/media/movies/0');
       expect(response.status).toBe(400);
       expect(response.body).toHaveProperty('error');
     });
@@ -247,7 +247,7 @@ describe('Movies Router', () => {
     it('should return 503 if TMDB_API_KEY is not set', async () => {
       delete process.env.TMDB_API_KEY;
 
-      const response = await request(app).get('/media/movies/27205');
+      const response = await request(app).get('/v1/media/movies/27205');
       expect(response.status).toBe(503);
       expect(response.body).toHaveProperty('error');
     });
@@ -312,7 +312,7 @@ describe('Movies Router', () => {
         }
       );
 
-      const response = await request(app).get('/media/movies/27205');
+      const response = await request(app).get('/v1/media/movies/27205');
 
       expect(response.status).toBe(200);
       const movie = response.body;
@@ -339,7 +339,7 @@ describe('Movies Router', () => {
     it('should handle fetch errors', async () => {
       global.fetch = jest.fn(() => Promise.reject(new Error('Network error'))) as jest.Mock;
 
-      const response = await request(app).get('/media/movies/27205');
+      const response = await request(app).get('/v1/media/movies/27205');
 
       expect(response.status).toBe(502);
       expect(response.body.error).toContain('Failed to reach TMDB');

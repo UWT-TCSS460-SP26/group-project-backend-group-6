@@ -114,13 +114,13 @@ afterEach(() => {
   delete process.env.TMDB_API_KEY;
 });
 
-// ─── GET /media/tv — Search TV shows ─────────────────────────────────────────
+// ─── GET /v1/media/tv — Search TV shows ──────────────────────────────────────
 
-describe('GET /media/tv', () => {
+describe('GET /v1/media/tv', () => {
   it('returns 200 with transformed paginated results', async () => {
     mockFetch.mockResolvedValueOnce(mockRes(TMDB_SEARCH_RESPONSE));
 
-    const res = await request(app).get('/media/tv').query({ query: 'breaking bad' });
+    const res = await request(app).get('/v1/media/tv').query({ title: 'breaking bad' });
 
     expect(res.status).toBe(200);
     expect(res.body).toMatchObject({
@@ -144,7 +144,7 @@ describe('GET /media/tv', () => {
     const stub = { ...TMDB_SHOW_STUB, poster_path: null };
     mockFetch.mockResolvedValueOnce(mockRes({ ...TMDB_SEARCH_RESPONSE, results: [stub] }));
 
-    const res = await request(app).get('/media/tv').query({ query: 'breaking bad' });
+    const res = await request(app).get('/v1/media/tv').query({ title: 'breaking bad' });
 
     expect(res.status).toBe(200);
     expect(res.body.results[0].posterUrl).toBeNull();
@@ -157,7 +157,7 @@ describe('GET /media/tv', () => {
       mockRes({ ...TMDB_SEARCH_RESPONSE, results: [drama, action], total_results: 2 })
     );
 
-    const res = await request(app).get('/media/tv').query({ query: 'show', genreId: '18' });
+    const res = await request(app).get('/v1/media/tv').query({ title: 'show', genreId: '18' });
 
     expect(res.status).toBe(200);
     expect(res.body.results).toHaveLength(1);
@@ -167,7 +167,7 @@ describe('GET /media/tv', () => {
   it('forwards the page query param to TMDB', async () => {
     mockFetch.mockResolvedValueOnce(mockRes({ ...TMDB_SEARCH_RESPONSE, page: 2 }));
 
-    const res = await request(app).get('/media/tv').query({ query: 'breaking bad', page: '2' });
+    const res = await request(app).get('/v1/media/tv').query({ title: 'breaking bad', page: '2' });
 
     expect(res.status).toBe(200);
     const calledUrl = mockFetch.mock.calls[0][0] as string;
@@ -175,7 +175,7 @@ describe('GET /media/tv', () => {
   });
 
   it('returns 400 when query param is missing', async () => {
-    const res = await request(app).get('/media/tv');
+    const res = await request(app).get('/v1/media/tv');
 
     expect(res.status).toBe(400);
     expect(res.body).toHaveProperty('error');
@@ -184,7 +184,7 @@ describe('GET /media/tv', () => {
   it('returns 503 when TMDB_API_KEY is not set', async () => {
     delete process.env.TMDB_API_KEY;
 
-    const res = await request(app).get('/media/tv').query({ query: 'breaking bad' });
+    const res = await request(app).get('/v1/media/tv').query({ title: 'breaking bad' });
 
     expect(res.status).toBe(503);
     expect(res.body).toHaveProperty('error');
@@ -193,7 +193,7 @@ describe('GET /media/tv', () => {
   it('returns 502 when fetch throws a network error', async () => {
     mockFetch.mockRejectedValueOnce(new Error('network failure'));
 
-    const res = await request(app).get('/media/tv').query({ query: 'breaking bad' });
+    const res = await request(app).get('/v1/media/tv').query({ title: 'breaking bad' });
 
     expect(res.status).toBe(502);
     expect(res.body).toMatchObject({ error: 'Bad Gateway' });
@@ -202,20 +202,20 @@ describe('GET /media/tv', () => {
   it('propagates TMDB error status and message', async () => {
     mockFetch.mockResolvedValueOnce(mockRes({ status_message: 'Invalid API key.' }, 401));
 
-    const res = await request(app).get('/media/tv').query({ query: 'breaking bad' });
+    const res = await request(app).get('/v1/media/tv').query({ title: 'breaking bad' });
 
     expect(res.status).toBe(401);
     expect(res.body).toMatchObject({ error: 'TMDB Error', message: 'Invalid API key.' });
   });
 });
 
-// ─── GET /media/tv/popular — Popular TV shows ────────────────────────────────
+// ─── GET /v1/media/tv/popular — Popular TV shows ─────────────────────────────
 
-describe('GET /media/tv/popular', () => {
+describe('GET /v1/media/tv/popular', () => {
   it('returns 200 with transformed paginated results', async () => {
     mockFetch.mockResolvedValueOnce(mockRes(TMDB_POPULAR_RESPONSE));
 
-    const res = await request(app).get('/media/tv/popular');
+    const res = await request(app).get('/v1/media/tv/popular');
 
     expect(res.status).toBe(200);
     expect(res.body).toMatchObject({
@@ -238,7 +238,7 @@ describe('GET /media/tv/popular', () => {
   it('forwards the page query param to TMDB', async () => {
     mockFetch.mockResolvedValueOnce(mockRes({ ...TMDB_POPULAR_RESPONSE, page: 3 }));
 
-    const res = await request(app).get('/media/tv/popular').query({ page: '3' });
+    const res = await request(app).get('/v1/media/tv/popular').query({ page: '3' });
 
     expect(res.status).toBe(200);
     const calledUrl = mockFetch.mock.calls[0][0] as string;
@@ -248,7 +248,7 @@ describe('GET /media/tv/popular', () => {
   it('returns 503 when TMDB_API_KEY is not set', async () => {
     delete process.env.TMDB_API_KEY;
 
-    const res = await request(app).get('/media/tv/popular');
+    const res = await request(app).get('/v1/media/tv/popular');
 
     expect(res.status).toBe(503);
   });
@@ -256,7 +256,7 @@ describe('GET /media/tv/popular', () => {
   it('returns 502 when fetch throws a network error', async () => {
     mockFetch.mockRejectedValueOnce(new Error('network failure'));
 
-    const res = await request(app).get('/media/tv/popular');
+    const res = await request(app).get('/v1/media/tv/popular');
 
     expect(res.status).toBe(502);
     expect(res.body).toMatchObject({ error: 'Bad Gateway' });
@@ -265,22 +265,22 @@ describe('GET /media/tv/popular', () => {
   it('propagates TMDB error status and message', async () => {
     mockFetch.mockResolvedValueOnce(mockRes({ status_message: 'Service unavailable.' }, 503));
 
-    const res = await request(app).get('/media/tv/popular');
+    const res = await request(app).get('/v1/media/tv/popular');
 
     expect(res.status).toBe(503);
     expect(res.body).toMatchObject({ error: 'TMDB Error', message: 'Service unavailable.' });
   });
 });
 
-// ─── GET /media/tv/:id — TV show details ─────────────────────────────────────
+// ─── GET /v1/media/tv/:id — TV show details ──────────────────────────────────
 
-describe('GET /media/tv/:id', () => {
+describe('GET /v1/media/tv/:id', () => {
   it('returns 200 with fully transformed detail shape', async () => {
     mockFetch
       .mockResolvedValueOnce(mockRes(TMDB_DETAIL_RESPONSE))
       .mockResolvedValueOnce(mockRes(TMDB_SIMILAR_RESPONSE));
 
-    const res = await request(app).get('/media/tv/1396');
+    const res = await request(app).get('/v1/media/tv/1396');
 
     expect(res.status).toBe(200);
     expect(res.body).toMatchObject({
@@ -309,7 +309,7 @@ describe('GET /media/tv/:id', () => {
       .mockResolvedValueOnce(mockRes(TMDB_DETAIL_RESPONSE))
       .mockResolvedValueOnce(mockRes(TMDB_SIMILAR_RESPONSE));
 
-    const res = await request(app).get('/media/tv/1396');
+    const res = await request(app).get('/v1/media/tv/1396');
 
     expect(res.body.networks).toEqual([
       { name: 'AMC', logoUrl: 'https://image.tmdb.org/t/p/w92/alqLicR1ZMHMaZGP3xRQxn9sq7p.png' },
@@ -321,7 +321,7 @@ describe('GET /media/tv/:id', () => {
       .mockResolvedValueOnce(mockRes(TMDB_DETAIL_RESPONSE))
       .mockResolvedValueOnce(mockRes(TMDB_SIMILAR_RESPONSE));
 
-    const res = await request(app).get('/media/tv/1396');
+    const res = await request(app).get('/v1/media/tv/1396');
 
     expect(res.body.seasons).toHaveLength(2);
     expect(res.body.seasons.every((s: { seasonNumber: number }) => s.seasonNumber > 0)).toBe(true);
@@ -332,7 +332,7 @@ describe('GET /media/tv/:id', () => {
       .mockResolvedValueOnce(mockRes(TMDB_DETAIL_RESPONSE))
       .mockResolvedValueOnce(mockRes(TMDB_SIMILAR_RESPONSE));
 
-    const res = await request(app).get('/media/tv/1396');
+    const res = await request(app).get('/v1/media/tv/1396');
 
     expect(res.body.seasons[0]).toMatchObject({
       seasonNumber: 1,
@@ -356,7 +356,7 @@ describe('GET /media/tv/:id', () => {
       .mockResolvedValueOnce(mockRes(detailWithManyCast))
       .mockResolvedValueOnce(mockRes(TMDB_SIMILAR_RESPONSE));
 
-    const res = await request(app).get('/media/tv/1396');
+    const res = await request(app).get('/v1/media/tv/1396');
 
     expect(res.body.cast).toHaveLength(10);
     expect(res.body.cast[0]).toMatchObject({
@@ -375,7 +375,7 @@ describe('GET /media/tv/:id', () => {
       .mockResolvedValueOnce(mockRes(detailWithNullProfile))
       .mockResolvedValueOnce(mockRes(TMDB_SIMILAR_RESPONSE));
 
-    const res = await request(app).get('/media/tv/1396');
+    const res = await request(app).get('/v1/media/tv/1396');
 
     expect(res.body.cast[0].profileUrl).toBeNull();
   });
@@ -394,7 +394,7 @@ describe('GET /media/tv/:id', () => {
       .mockResolvedValueOnce(mockRes(TMDB_DETAIL_RESPONSE))
       .mockResolvedValueOnce(mockRes({ results: manyShows }));
 
-    const res = await request(app).get('/media/tv/1396');
+    const res = await request(app).get('/v1/media/tv/1396');
 
     expect(res.body.similar).toHaveLength(6);
   });
@@ -404,27 +404,27 @@ describe('GET /media/tv/:id', () => {
       .mockResolvedValueOnce(mockRes(TMDB_DETAIL_RESPONSE))
       .mockResolvedValueOnce(mockRes({ status_message: 'Not found.' }, 404));
 
-    const res = await request(app).get('/media/tv/1396');
+    const res = await request(app).get('/v1/media/tv/1396');
 
     expect(res.status).toBe(200);
     expect(res.body.similar).toEqual([]);
   });
 
   it('returns 400 for a non-numeric id', async () => {
-    const res = await request(app).get('/media/tv/abc');
+    const res = await request(app).get('/v1/media/tv/abc');
 
     expect(res.status).toBe(400);
     expect(res.body).toHaveProperty('error');
   });
 
   it('returns 400 for id zero', async () => {
-    const res = await request(app).get('/media/tv/0');
+    const res = await request(app).get('/v1/media/tv/0');
 
     expect(res.status).toBe(400);
   });
 
   it('returns 400 for a negative id', async () => {
-    const res = await request(app).get('/media/tv/-5');
+    const res = await request(app).get('/v1/media/tv/-5');
 
     expect(res.status).toBe(400);
   });
@@ -432,7 +432,7 @@ describe('GET /media/tv/:id', () => {
   it('returns 503 when TMDB_API_KEY is not set', async () => {
     delete process.env.TMDB_API_KEY;
 
-    const res = await request(app).get('/media/tv/1396');
+    const res = await request(app).get('/v1/media/tv/1396');
 
     expect(res.status).toBe(503);
   });
@@ -440,7 +440,7 @@ describe('GET /media/tv/:id', () => {
   it('returns 502 when fetch throws a network error', async () => {
     mockFetch.mockRejectedValueOnce(new Error('network failure'));
 
-    const res = await request(app).get('/media/tv/1396');
+    const res = await request(app).get('/v1/media/tv/1396');
 
     expect(res.status).toBe(502);
     expect(res.body).toMatchObject({ error: 'Bad Gateway' });
@@ -451,7 +451,7 @@ describe('GET /media/tv/:id', () => {
       mockRes({ status_message: 'The resource could not be found.' }, 404)
     );
 
-    const res = await request(app).get('/media/tv/99999');
+    const res = await request(app).get('/v1/media/tv/99999');
 
     expect(res.status).toBe(404);
     expect(res.body).toMatchObject({
