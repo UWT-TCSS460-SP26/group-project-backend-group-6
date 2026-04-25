@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Role } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function main() {
@@ -8,7 +8,7 @@ async function main() {
     create: {
       email: 'admin@dev.local',
       username: 'admin',
-      role: 'admin',
+      role: Role.ADMIN,
     },
   });
   console.log('Admin user seeded!');
