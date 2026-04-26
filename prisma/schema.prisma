@@ -1,9 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
   output   = "../src/generated/prisma"
@@ -11,7 +8,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 enum Role {
@@ -24,35 +20,54 @@ enum MediaType {
   tv
 }
 
+// ─── User ─────────────────────────────────────────────────────────────────────
+// Stores user-generated accounts only.
+// TMDB metadata (movies, TV shows) is never stored here.
+// displayName is mutable — users set/change it via PUT /users/me.
+
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  username  String   @unique
-  role      Role     @default(user)
-  createdAt DateTime @default(now())
+  id          Int      @id @default(autoincrement())
+  email       String   @unique
+  username    String   @unique
+  displayName String              // required — set on first login via dev-login
+  role        Role     @default(user)
+  createdAt   DateTime @default(now())
 
   ratings Rating[]
   reviews Review[]
+
+  @@map("users")
 }
+
+// ─── Rating ───────────────────────────────────────────────────────────────────
+// Half-star scale: 0.5 – 5.0 in 0.5 increments.
+// One rating per (user, tmdbId, mediaType) — re-rating upserts the existing row.
+// tmdbId + mediaType are the foreign key into TMDB; we store no TMDB metadata here.
 
 model Rating {
   id        Int       @id @default(autoincrement())
-  score     Int       // recommend 1–10
+  score     Float                 // 0.5 – 5.0 in 0.5 steps
   tmdbId    Int
   mediaType MediaType
   userId    Int
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
-  user User @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, tmdbId, mediaType]) // one rating per user per content
-  @@index([tmdbId, mediaType])          // makes public GETs fast
+  @@unique([userId, tmdbId, mediaType])  // one rating per user per content item
+  @@index([tmdbId, mediaType])           // makes public GET /ratings/:tmdbId fast
+
+  @@map("ratings")
 }
+
+// ─── Review ───────────────────────────────────────────────────────────────────
+// Freeform text review. title is optional.
+// Same TMDB reference pattern as Rating.
 
 model Review {
   id        Int       @id @default(autoincrement())
-  title     String?   // optional
+  title     String?               // optional
   body      String
   tmdbId    Int
   mediaType MediaType
@@ -60,7 +75,9 @@ model Review {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
-  user User @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([tmdbId, mediaType])
+  @@index([tmdbId, mediaType])           // makes public GET /reviews/:tmdbId fast
+
+  @@map("reviews")
 }

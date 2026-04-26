@@ -22,6 +22,10 @@ tags:
     description: Search, browse, and retrieve movie data
   - name: TV Shows
     description: Search, browse, and retrieve TV show data
+  - name: Ratings
+    description: Community ratings (0.5–5.0 half-star scale) for movies and TV shows
+  - name: Users
+    description: Authenticated user profile management
 
 # ─────────────────────────────────────────────
 #  PATHS
@@ -324,10 +328,238 @@ paths:
         '500':
           $ref: '#/components/responses/InternalError'
 
+  # ── Ratings (public read) ──────────────────────────────────────────────────
+
+  /ratings/{tmdbId}:
+    get:
+      tags: [Ratings]
+      summary: Get ratings for a movie or TV show
+      description: >
+        Returns a paginated list of community ratings for a given TMDB identifier,
+        plus an aggregate average score rounded to the nearest half-star.
+        No authentication required.
+      operationId: getRatingsByTmdbId
+      parameters:
+        - $ref: '#/components/parameters/tmdbIdParam'
+        - name: mediaType
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [movie, tv]
+          description: Whether the TMDB id refers to a movie or a TV show
+          example: movie
+        - $ref: '#/components/parameters/pageParam'
+        - $ref: '#/components/parameters/limitParam'
+      responses:
+        '200':
+          description: Paginated ratings list with aggregate summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RatingsListResponse'
+              example:
+                tmdbId: 550
+                mediaType: movie
+                averageScore: 4.0
+                totalRatings: 2
+                page: 1
+                totalPages: 1
+                totalResults: 2
+                results:
+                  - id: 1
+                    score: 4.5
+                    createdAt: '2026-04-20T10:00:00Z'
+                    updatedAt: '2026-04-20T10:00:00Z'
+                    user:
+                      id: 2
+                      username: alice
+                      displayName: Alice
+                  - id: 2
+                    score: 3.5
+                    createdAt: '2026-04-20T11:00:00Z'
+                    updatedAt: '2026-04-20T11:00:00Z'
+                    user:
+                      id: 3
+                      username: bob
+                      displayName: Bob
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ── Ratings (authenticated writes) ────────────────────────────────────────
+
+  /ratings:
+    post:
+      tags: [Ratings]
+      summary: Submit or update your rating
+      description: >
+        Creates a new rating for the given TMDB content, or updates it if you have
+        already rated the same item. Score must be a multiple of 0.5 between 0.5 and 5.0.
+        Requires a valid Bearer token.
+      operationId: createOrUpdateRating
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RatingBody'
+            example:
+              tmdbId: 550
+              mediaType: movie
+              score: 4.5
+      responses:
+        '200':
+          description: Rating created or updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Rating'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /ratings/{id}:
+    put:
+      tags: [Ratings]
+      summary: Update your rating score
+      description: >
+        Replaces the score on a rating you own. You cannot update someone else's rating.
+        Score must be a multiple of 0.5 between 0.5 and 5.0.
+        Requires a valid Bearer token.
+      operationId: updateRating
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/idParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RatingScoreBody'
+            example:
+              score: 3.0
+      responses:
+        '200':
+          description: Updated rating
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Rating'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    delete:
+      tags: [Ratings]
+      summary: Delete a rating
+      description: >
+        Deletes a rating by its id. Regular users can only delete their own ratings.
+        Admin users can delete any rating.
+        Requires a valid Bearer token.
+      operationId: deleteRating
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/idParam'
+      responses:
+        '200':
+          description: Rating deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Rating deleted successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ── Users ──────────────────────────────────────────────────────────────────
+
+  /users/me:
+    get:
+      tags: [Users]
+      summary: Get your profile
+      description: Returns the authenticated user's profile. Requires a valid Bearer token.
+      operationId: getMyProfile
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Your user profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    put:
+      tags: [Users]
+      summary: Update your profile
+      description: >
+        Updates your display name. Requires a valid Bearer token.
+        Only the fields you send are changed.
+      operationId: updateMyProfile
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProfileBody'
+            example:
+              displayName: FilmFan42
+      responses:
+        '200':
+          description: Updated profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
 # ─────────────────────────────────────────────
 #  COMPONENTS
 # ─────────────────────────────────────────────
 components:
+  # ── Security Schemes ────────────────────────
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
   # ── Parameters ──────────────────────────────
   parameters:
     movieTitleParam:
@@ -390,6 +622,37 @@ components:
         type: integer
         example: 157336
 
+    tmdbIdParam:
+      name: tmdbId
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+      description: TMDB numeric identifier for the movie or TV show
+      example: 550
+
+    idParam:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+      description: Database id of the resource
+      example: 7
+
+    limitParam:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+      description: Number of results per page (max 100)
+
   # ── Reusable Responses ───────────────────────
   responses:
     BadRequest:
@@ -421,6 +684,26 @@ components:
           example:
             error: Internal Server Error
             message: 'An unexpected error occurred. Please try again later.'
+
+    Unauthorized:
+      description: Missing or invalid Bearer token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: Unauthorized
+            message: Authorization header missing or token invalid
+
+    Forbidden:
+      description: Authenticated but not permitted to perform this action
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: Forbidden
+            message: You do not own this rating
 
   # ── Schemas ─────────────────────────────────
   schemas:
@@ -771,3 +1054,176 @@ components:
         status:
           type: string
           example: OK
+
+    # -- Ratings schemas ------------------------
+    Rating:
+      type: object
+      required: [id, score, tmdbId, mediaType, userId, createdAt, updatedAt]
+      properties:
+        id:
+          type: integer
+          example: 1
+        score:
+          type: number
+          format: float
+          minimum: 0.5
+          maximum: 5.0
+          multipleOf: 0.5
+          description: Half-star rating on a 0.5–5.0 scale
+          example: 4.5
+        tmdbId:
+          type: integer
+          example: 550
+        mediaType:
+          type: string
+          enum: [movie, tv]
+          example: movie
+        userId:
+          type: integer
+          example: 2
+        createdAt:
+          type: string
+          format: date-time
+          example: '2026-04-20T10:00:00Z'
+        updatedAt:
+          type: string
+          format: date-time
+          example: '2026-04-20T10:00:00Z'
+
+    RatingWithUser:
+      type: object
+      required: [id, score, createdAt, updatedAt, user]
+      properties:
+        id:
+          type: integer
+          example: 1
+        score:
+          type: number
+          format: float
+          minimum: 0.5
+          maximum: 5.0
+          example: 4.5
+        createdAt:
+          type: string
+          format: date-time
+          example: '2026-04-20T10:00:00Z'
+        updatedAt:
+          type: string
+          format: date-time
+          example: '2026-04-20T10:00:00Z'
+        user:
+          type: object
+          required: [id, username, displayName]
+          properties:
+            id:
+              type: integer
+              example: 2
+            username:
+              type: string
+              example: alice
+            displayName:
+              type: string
+              example: Alice
+
+    RatingsListResponse:
+      type: object
+      required: [tmdbId, mediaType, averageScore, totalRatings, page, totalPages, totalResults, results]
+      properties:
+        tmdbId:
+          type: integer
+          example: 550
+        mediaType:
+          type: string
+          enum: [movie, tv]
+          example: movie
+        averageScore:
+          type: number
+          format: float
+          nullable: true
+          description: Average score rounded to nearest 0.5; null if no ratings yet
+          example: 4.0
+        totalRatings:
+          type: integer
+          example: 2
+        page:
+          type: integer
+          example: 1
+        totalPages:
+          type: integer
+          example: 1
+        totalResults:
+          type: integer
+          example: 2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/RatingWithUser'
+
+    RatingBody:
+      type: object
+      required: [tmdbId, mediaType, score]
+      properties:
+        tmdbId:
+          type: integer
+          minimum: 1
+          description: TMDB numeric identifier for the content being rated
+          example: 550
+        mediaType:
+          type: string
+          enum: [movie, tv]
+          example: movie
+        score:
+          type: number
+          format: float
+          minimum: 0.5
+          maximum: 5.0
+          multipleOf: 0.5
+          description: Half-star rating on a 0.5–5.0 scale
+          example: 4.5
+
+    RatingScoreBody:
+      type: object
+      required: [score]
+      properties:
+        score:
+          type: number
+          format: float
+          minimum: 0.5
+          maximum: 5.0
+          multipleOf: 0.5
+          description: Updated score on the 0.5–5.0 half-star scale
+          example: 3.0
+
+    # -- Users schemas --------------------------
+    UserProfile:
+      type: object
+      required: [id, username, displayName, role, createdAt]
+      properties:
+        id:
+          type: integer
+          example: 2
+        username:
+          type: string
+          example: alice
+        displayName:
+          type: string
+          maxLength: 50
+          example: FilmFan42
+        role:
+          type: string
+          enum: [user, admin]
+          example: user
+        createdAt:
+          type: string
+          format: date-time
+          example: '2026-04-01T08:00:00Z'
+
+    UpdateProfileBody:
+      type: object
+      properties:
+        displayName:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: Your public display name (shown next to ratings and reviews)
+          example: FilmFan42

@@ -7,73 +7,60 @@ const router = Router();
 /**
  * POST /auth/dev-login
  *
- * TEMPORARY — Sprint 2 only. Accepts a username, find-or-creates a user row
- * with role='user', and returns a signed JWT. This endpoint does NOT validate
- * a password. It is a local-development stand-in for the real Auth-Squared
- * integration coming in Sprint 3.
+ * Local-development only. Accepts { username, displayName } in the body,
+ * find-or-creates a user, and returns a signed JWT.
  *
- * DO NOT deploy this router to a public URL.
+ * - If the user already exists, displayName is updated if a new one is provided.
+ * - Do NOT deploy this endpoint to a public URL. It is replaced by real
+ *   Auth-Squared integration in Sprint 3.
  *
- * Request body:
- *   {
- *     "username": "alice",
- *     "email": "alice@example.test"   // optional; defaults to <username>@dev.local
- *   }
- *
- * Response:
- *   { "token": "<jwt>" }
- *
- * The JWT payload contains:
- *   { sub: <user.id>, email: <user.email>, role: <user.role>, iat, exp }
- *
- * Expected Prisma User model (you own the rest of your schema):
- *
- *   model User {
- *     id       Int    @id @default(autoincrement())
- *     username String @unique
- *     email    String @unique
- *     role     String @default("user")
- *     // ... other fields your team designs
- *   }
- *
- * Admin accounts must be seeded separately — this endpoint only creates
- * regular users. To log in as an admin, create the user via your seed
- * script and then POST the same username here.
+ * Body: { username: string, displayName?: string }
  */
-router.post('/dev-login', async (request: Request, response: Response): Promise<void> => {
+router.post('/dev-login', async (request: Request, response: Response) => {
   const secret = process.env.JWT_SECRET;
   if (!secret) {
     response.status(500).json({ error: 'JWT_SECRET is not configured' });
     return;
   }
 
-  const { username, email } = request.body as { username?: string; email?: string };
+  const { username, displayName } = request.body;
+
   if (!username || typeof username !== 'string') {
-    response.status(400).json({ error: 'username is required' });
+    response.status(400).json({ error: 'Bad Request', message: '"username" is required' });
     return;
   }
 
-  const user = await prisma.user.upsert({
-    where: { username },
-    update: {},
-    create: {
-      username,
-      email: email ?? `${username}@dev.local`,
-      role: 'user',
-    },
-  });
+  // displayName falls back to username if not provided, since the field is required
+  const resolvedDisplayName: string =
+    typeof displayName === 'string' && displayName.trim() ? displayName.trim() : username;
 
-  const token = jwt.sign(
-    {
-      sub: user.id,
-      email: user.email,
-      role: user.role,
-    },
-    secret,
-    { expiresIn: '24h' }
-  );
+  try {
+    const user = await prisma.user.upsert({
+      where: { username },
+      update: {
+        // Update displayName if caller explicitly provided one
+        ...(typeof displayName === 'string' && displayName.trim()
+          ? { displayName: displayName.trim() }
+          : {}),
+      },
+      create: {
+        username,
+        email: `${username}@dev.local`,
+        displayName: resolvedDisplayName,
+        // role defaults to "user" per schema
+      },
+    });
 
-  response.json({ token });
+    const token = jwt.sign(
+      { sub: user.id, email: user.email, role: user.role },
+      secret,
+      { expiresIn: '8h' }
+    );
+
+    response.status(200).json({ token, user: { id: user.id, username: user.username, displayName: user.displayName, role: user.role } });
+  } catch {
+    response.status(500).json({ error: 'Internal Server Error', message: 'Failed to create or find user' });
+  }
 });
 
 export default router;
