@@ -1,5 +1,9 @@
-import { PrismaClient, Role } from '@prisma/client';
-const prisma = new PrismaClient();
+import { PrismaClient, Role } from '../src/generated/prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
+
+const connectionString = process.env.DATABASE_URL!;
+const adapter = new PrismaPg({ connectionString });
+const prisma = new PrismaClient({ adapter });
 
 async function main() {
   await prisma.user.upsert({
@@ -8,7 +12,7 @@ async function main() {
     create: {
       email: 'admin@dev.local',
       username: 'admin',
-      role: Role.ADMIN,
+      role: Role.admin,
     },
   });
   console.log('Admin user seeded!');
