@@ -5,3 +5,4 @@ Object.assign(global, { fetch: undiciFetch, Request, Response, Headers });
 
 // Set a dummy TMDB_API_KEY for tests
 process.env.TMDB_API_KEY = 'test-key';
+process.env.JWT_SECRET = 'test-secret';
