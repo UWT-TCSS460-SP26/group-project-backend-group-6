@@ -191,3 +191,59 @@ We will try our best! Nos podemos! Si nos podamos!
 - Started to discuss Sprint 2
 
 - Planned sprint standup meeting for Monday (tomorrow) at 4:30pm (no more than 5 minutes)
+
+
+
+# Group 6 2026-04-20 Sprint 2 Meeting 0 (4:30pm - 4:40pm)
+
+**Modality: Discord**
+
+**In attendance: Luke, Jayda, Connor, John**
+**Notes taker: Luke**
+**Meeting Manager: Connor**
+
+- Short standup to quickly review sprint and assign preliminary tasks
+
+- Pretty much it.
+
+# Group 6 2026-04-21 Sprint 2 Meeting 1 (4:15pm - 5:00pm)
+
+**Modality: In-person**
+
+**In attendance: Luke, Jayda, Connor, John**
+**Notes taker: Luke**
+**Meeting Manager: Connor**
+
+- Starting drawing up our ideas for our backend database schema
+
+- Implemented changes recommended from group meeting w/ Professor
+
+- Discussed/Luke started on prisma setup
+
+# Group 6 2026-04-24 Sprint 2 Meeting 2 (8:15-9:00)
+
+**Modality: Discord**
+
+**In attendance: Luke, Jayda, Connor, John**
+**Notes taker: Luke**
+**Meeting Manager: Connor**
+
+- Made sure everyone had docker and prisma up and running
+
+- Connor did a lot of that leading for everyone
+
+# Group 6 2026-04-26 Sprint 2 Meeting 3 (4:30pm - 6:30pm)
+
+**Modality: Discord**
+
+**In attendance: Luke, Jayda, Connor, John**
+**Notes taker: Luke**
+**Meeting Manager: Connor**
+
+- This meeting was like a pair-programming worksesh
+
+- Ran into more individual problems with prisma and db syncing
+
+- Resolved, discussed the implementations developed for Ratings and Review DB
+
+- Manually tested the CRUD routes as a group in postman so we can all understand how they work and the process a browser/user will go through when moving through our API
