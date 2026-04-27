@@ -7,6 +7,8 @@ import YAML from 'yaml';
 import { apiReference } from '@scalar/express-api-reference';
 import { moviesRouter } from './routes/v1/media/movies';
 import { tvRouter } from './routes/v1/media/tv';
+import { ratingsRouter } from './routes/v1/ratings';
+import { reviewsRouter } from './routes/v1/reviews';
 import devAuthRouter from './routes/devAuth';
 const app = express();
 
@@ -28,6 +30,8 @@ app.get('/health', (_request: Request, response: Response) => {
 app.use('/v1/media', tvRouter);
 
 app.use('/v1/media/movies', moviesRouter);
+app.use('/v1/ratings', ratingsRouter);
+app.use('/v1/reviews', reviewsRouter);
 
 app.use((_request: Request, response: Response) => {
   response.status(404).json({ error: 'Route not found' });
