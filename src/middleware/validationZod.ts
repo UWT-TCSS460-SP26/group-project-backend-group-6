@@ -1,14 +1,38 @@
-import { RequestHandler } from 'express';
 import { z } from 'zod';
+import { RequestHandler } from 'express';
+
+/**
+ * Generic middleware factory. Parses `request[source]` against `schema`;
+ * on failure responds 400 with issue details, on success replaces the
+ * source with the parsed (and coerced) value so downstream handlers get
+ * properly typed data.
+ */
+const validate =
+  (source: 'body' | 'params', schema: z.ZodType): RequestHandler =>
+  (request, response, next) => {
+    const result = schema.safeParse(request[source]);
+    if (!result.success) {
+      response.status(400).json({
+        error: 'Validation failed',
+        details: result.error.issues.map((i) => ({
+          path: i.path.join('.'),
+          message: i.message,
+        })),
+      });
+      return;
+    }
+    request[source] = result.data;
+    next();
+  };
 
 // --- Schemas ---
 
-const IdParamSchema = z.object({
-  id: z.coerce.number().int().positive(),
-});
-
 const TmdbParamSchema = z.object({
   tmdbId: z.coerce.number().int().positive(),
+});
+
+const NumericIdSchema = z.object({
+  id: z.coerce.number().int().positive(),
 });
 
 const RatingBodySchema = z.object({
@@ -37,34 +61,14 @@ const PatchReviewBodySchema = z
     message: 'At least one field is required (title, body)',
   });
 
-// --- Generic validate factory (same as professor's) ---
-
-const validate =
-  (source: 'body' | 'params', schema: z.ZodType): RequestHandler =>
-  (request, response, next) => {
-    const result = schema.safeParse(request[source]);
-    if (!result.success) {
-      response.status(400).json({
-        error: 'Validation failed',
-        details: result.error.issues.map((i) => ({
-          path: i.path.join('.'),
-          message: i.message,
-        })),
-      });
-      return;
-    }
-    request[source] = result.data;
-    next();
-  };
-
 // --- Middleware exports ---
 
-export const validateNumericId = validate('params', IdParamSchema);
 export const validateTmdbParam = validate('params', TmdbParamSchema);
+export const validateNumericId = validate('params', NumericIdSchema);
 export const validateRatingBody = validate('body', RatingBodySchema);
 export const validatePatchRatingBody = validate('body', PatchRatingBodySchema);
 export const validateReviewBody = validate('body', ReviewBodySchema);
-export const validatePatchReviewBodySchema = validate('body', PatchReviewBodySchema);
+export const validatePatchReviewBody = validate('body', PatchReviewBodySchema);
 
 // --- Inferred types ---
 
