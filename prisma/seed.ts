@@ -1,14 +1,11 @@
-import { PrismaClient, Role } from '../src/generated/prisma/client';
-import { PrismaPg } from '@prisma/adapter-pg';
+import { PrismaClient, Role } from '../src/generated/prisma';
 
-const connectionString = process.env.DATABASE_URL!;
-const adapter = new PrismaPg({ connectionString });
-const prisma = new PrismaClient({ adapter });
+const prisma = new PrismaClient();
 
 async function main() {
   await prisma.user.upsert({
     where: { email: 'admin@dev.local' },
-    update: {}, // if admin already exists, do nothing
+    update: {},
     create: {
       email: 'admin@dev.local',
       username: 'admin',
@@ -19,8 +16,5 @@ async function main() {
 }
 
 main()
-  .catch((e) => {
-    console.error(e);
-    process.exit(1);
-  })
+  .catch((e) => { console.error(e); process.exit(1); })
   .finally(() => prisma.$disconnect());
