@@ -2,7 +2,7 @@ openapi: 3.0.3
 
 info:
   title: TCSS 460 Team 6 API
-  version: 0.1.0
+  version: 0.2.0
   description: |
     **Team:** Group 6
     **Deployed URL:** https://tcss460-team-6-api.onrender.com
@@ -10,6 +10,19 @@ info:
     A RESTful API for the TCSS 460 group project. Proxies movie and TV show data
     through team-designed endpoints with custom response schemas — clients never
     interact with any third-party service directly.
+
+    Sprint 2 adds user-generated content: ratings and reviews are persisted in
+    PostgreSQL via Prisma. Sprint 3 replaces dev-login with real authentication
+    via Auth² — the course's shared OAuth2 + OIDC identity provider.
+
+    **Authentication:** Write endpoints require a Bearer JWT issued by Auth²
+    (`https://tcss-460-iam.onrender.com`), scoped to the `group-6-api` audience.
+    Obtain a token from the TCSS 460 Token Playground by selecting the
+    `group-6-api` audience. Tokens expire after one hour.
+
+    **Role gating:** Protected routes use a 5-tier hierarchy —
+    `User < Moderator < Admin < SuperAdmin < Owner`. Routes requiring elevated
+    access use `requireRoleAtLeast('Admin')` or above.
 
 servers:
   - url: https://tcss460-team-6-api.onrender.com
@@ -22,6 +35,12 @@ tags:
     description: Search, browse, and retrieve movie data
   - name: TV Shows
     description: Search, browse, and retrieve TV show data
+  - name: Ratings
+    description: User ratings for movies and TV shows
+  - name: Reviews
+    description: User reviews for movies and TV shows
+
+security: [] # public by default; individual operations opt in
 
 # ─────────────────────────────────────────────
 #  PATHS
@@ -324,10 +343,296 @@ paths:
         '500':
           $ref: '#/components/responses/InternalError'
 
-# ─────────────────────────────────────────────
-#  COMPONENTS
-# ─────────────────────────────────────────────
-components:
+  # ── Ratings ──────────────────────────────────
+  /ratings:
+    post:
+      tags: [Ratings]
+      summary: Submit or update a rating
+      description: >
+        Creates a rating for the authenticated user. If the user has already rated
+        this content (same tmdbId + mediaType), the existing rating is updated (upsert).
+        The userId is always taken from the JWT — never from the request body.
+      operationId: createOrUpdateRating
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RatingRequest'
+            example:
+              tmdbId: 550
+              mediaType: movie
+              score: 9
+      responses:
+        '200':
+          description: Rating upserted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Rating'
+              example:
+                id: 1
+                tmdbId: 550
+                mediaType: movie
+                score: 9
+                userId: 3
+                createdAt: '2026-04-20T12:00:00Z'
+                updatedAt: '2026-04-20T12:00:00Z'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /ratings/{tmdbId}:
+    get:
+      tags: [Ratings]
+      summary: Get ratings for a title
+      description: >
+        Returns all ratings submitted for a given TMDB identifier and media type.
+        No authentication required. Includes aggregate stats (average score, count)
+        alongside the individual records.
+      operationId: getRatingsByTmdbId
+      parameters:
+        - $ref: '#/components/parameters/tmdbIdParam'
+        - $ref: '#/components/parameters/mediaTypeParam'
+        - $ref: '#/components/parameters/pageParam'
+      responses:
+        '200':
+          description: Ratings for the requested title
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RatingListResponse'
+              example:
+                tmdbId: 550
+                mediaType: movie
+                averageScore: 8.7
+                totalRatings: 3
+                page: 1
+                totalPages: 1
+                results:
+                  - id: 1
+                    score: 9
+                    userId: 3
+                    createdAt: '2026-04-20T12:00:00Z'
+                    updatedAt: '2026-04-20T12:00:00Z'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /ratings/{id}:
+    put:
+      tags: [Ratings]
+      summary: Update a rating
+      description: >
+        Updates the score on an existing rating. The authenticated user must own
+        the rating. Admins may update any rating.
+      operationId: updateRating
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/recordIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchRatingRequest'
+            example:
+              score: 7
+      responses:
+        '200':
+          description: Rating updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Rating'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    delete:
+      tags: [Ratings]
+      summary: Delete a rating
+      description: >
+        Deletes a rating by its ID. The authenticated user must own the rating.
+        Admins may delete any rating.
+      operationId: deleteRating
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/recordIdParam'
+      responses:
+        '204':
+          description: Rating deleted successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ── Reviews ──────────────────────────────────
+  /reviews:
+    post:
+      tags: [Reviews]
+      summary: Submit a review
+      description: >
+        Creates a review for the authenticated user. Multiple reviews per user
+        per title are allowed. The userId is always taken from the JWT.
+      operationId: createReview
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviewRequest'
+            example:
+              tmdbId: 550
+              mediaType: movie
+              title: A haunting masterpiece
+              body: Fight Club is a film that gets better with every rewatch. The performances are electric.
+      responses:
+        '201':
+          description: Review created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Review'
+              example:
+                id: 1
+                tmdbId: 550
+                mediaType: movie
+                title: A haunting masterpiece
+                body: Fight Club is a film that gets better with every rewatch. The performances are electric.
+                userId: 3
+                createdAt: '2026-04-20T12:00:00Z'
+                updatedAt: '2026-04-20T12:00:00Z'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /reviews/{tmdbId}:
+    get:
+      tags: [Reviews]
+      summary: Get reviews for a title
+      description: >
+        Returns a paginated list of reviews for a given TMDB identifier and media type.
+        No authentication required. Results are sorted by most recent first.
+      operationId: getReviewsByTmdbId
+      parameters:
+        - $ref: '#/components/parameters/tmdbIdParam'
+        - $ref: '#/components/parameters/mediaTypeParam'
+        - $ref: '#/components/parameters/pageParam'
+      responses:
+        '200':
+          description: Reviews for the requested title
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewListResponse'
+              example:
+                tmdbId: 550
+                mediaType: movie
+                totalReviews: 1
+                page: 1
+                totalPages: 1
+                results:
+                  - id: 1
+                    title: A haunting masterpiece
+                    body: Fight Club is a film that gets better with every rewatch.
+                    userId: 3
+                    createdAt: '2026-04-20T12:00:00Z'
+                    updatedAt: '2026-04-20T12:00:00Z'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /reviews/{id}:
+    put:
+      tags: [Reviews]
+      summary: Update a review
+      description: >
+        Updates the title and/or body of an existing review. At least one field is
+        required. The authenticated user must own the review. Admins may update any review.
+      operationId: updateReview
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/recordIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchReviewRequest'
+            example:
+              body: On reflection, a genuine classic.
+      responses:
+        '200':
+          description: Review updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Review'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    delete:
+      tags: [Reviews]
+      summary: Delete a review
+      description: >
+        Deletes a review by its ID. The authenticated user must own the review.
+        Admins may delete any review regardless of author.
+      operationId: deleteReview
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/recordIdParam'
+      responses:
+        '204':
+          description: Review deleted successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ─────────────────────────────────────────────
+  #  COMPONENTS
+  # ─────────────────────────────────────────────
+
   # ── Parameters ──────────────────────────────
   parameters:
     movieTitleParam:
@@ -390,6 +695,34 @@ components:
         type: integer
         example: 157336
 
+    tmdbIdParam:
+      name: tmdbId
+      in: path
+      required: true
+      description: TMDB identifier for the movie or TV show
+      schema:
+        type: integer
+        example: 550
+
+    mediaTypeParam:
+      name: mediaType
+      in: query
+      required: true
+      description: Whether the content is a movie or TV show
+      schema:
+        type: string
+        enum: [movie, tv]
+        example: movie
+
+    recordIdParam:
+      name: id
+      in: path
+      required: true
+      description: Primary key of the rating or review record
+      schema:
+        type: integer
+        example: 1
+
   # ── Reusable Responses ───────────────────────
   responses:
     BadRequest:
@@ -411,6 +744,26 @@ components:
           example:
             error: Not Found
             message: 'No movie found with id 99999.'
+
+    Unauthorized:
+      description: Missing or invalid JWT
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: Unauthorized
+            message: 'Authorization token is missing or invalid.'
+
+    Forbidden:
+      description: Authenticated user does not have permission to modify this resource
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: Forbidden
+            message: 'You do not have permission to modify this resource.'
 
     InternalError:
       description: Unexpected server error (e.g. upstream service unavailable)
@@ -749,6 +1102,202 @@ components:
               items:
                 $ref: '#/components/schemas/TVShowCard'
 
+    # -- Ratings --------------------------------
+    RatingRequest:
+      type: object
+      required: [tmdbId, mediaType, score]
+      properties:
+        tmdbId:
+          type: integer
+          description: TMDB identifier for the content being rated
+          example: 550
+        mediaType:
+          type: string
+          enum: [movie, tv]
+          description: Whether the content is a movie or TV show
+          example: movie
+        score:
+          type: integer
+          minimum: 1
+          maximum: 10
+          description: Rating score from 1 to 10
+          example: 9
+
+    PatchRatingRequest:
+      type: object
+      required: [score]
+      properties:
+        score:
+          type: integer
+          minimum: 1
+          maximum: 10
+          description: Updated rating score from 1 to 10
+          example: 7
+
+    Rating:
+      type: object
+      required: [id, tmdbId, mediaType, score, userId, createdAt, updatedAt]
+      properties:
+        id:
+          type: integer
+          example: 1
+        tmdbId:
+          type: integer
+          example: 550
+        mediaType:
+          type: string
+          enum: [movie, tv]
+          example: movie
+        score:
+          type: integer
+          minimum: 1
+          maximum: 10
+          example: 9
+        userId:
+          type: integer
+          description: ID of the user who submitted the rating
+          example: 3
+        createdAt:
+          type: string
+          format: date-time
+          example: '2026-04-20T12:00:00Z'
+        updatedAt:
+          type: string
+          format: date-time
+          example: '2026-04-20T12:00:00Z'
+
+    RatingListResponse:
+      type: object
+      required: [tmdbId, mediaType, averageScore, totalRatings, page, totalPages, results]
+      properties:
+        tmdbId:
+          type: integer
+          example: 550
+        mediaType:
+          type: string
+          enum: [movie, tv]
+          example: movie
+        averageScore:
+          type: number
+          format: float
+          description: Mean score across all ratings for this title
+          example: 8.7
+        totalRatings:
+          type: integer
+          description: Total number of ratings submitted for this title
+          example: 3
+        page:
+          type: integer
+          example: 1
+        totalPages:
+          type: integer
+          example: 1
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Rating'
+
+    # -- Reviews --------------------------------
+    ReviewRequest:
+      type: object
+      required: [tmdbId, mediaType, body]
+      properties:
+        tmdbId:
+          type: integer
+          description: TMDB identifier for the content being reviewed
+          example: 550
+        mediaType:
+          type: string
+          enum: [movie, tv]
+          description: Whether the content is a movie or TV show
+          example: movie
+        title:
+          type: string
+          minLength: 1
+          description: Optional review headline
+          example: A haunting masterpiece
+        body:
+          type: string
+          minLength: 1
+          description: Full review text
+          example: Fight Club is a film that gets better with every rewatch.
+
+    PatchReviewRequest:
+      type: object
+      description: At least one field (title or body) must be provided.
+      properties:
+        title:
+          type: string
+          minLength: 1
+          description: Updated review headline
+          example: On reflection, a genuine classic
+        body:
+          type: string
+          minLength: 1
+          description: Updated review body
+          example: On reflection, a genuine classic.
+
+    Review:
+      type: object
+      required: [id, tmdbId, mediaType, body, userId, createdAt, updatedAt]
+      properties:
+        id:
+          type: integer
+          example: 1
+        tmdbId:
+          type: integer
+          example: 550
+        mediaType:
+          type: string
+          enum: [movie, tv]
+          example: movie
+        title:
+          type: string
+          nullable: true
+          description: Review headline (null if not provided)
+          example: A haunting masterpiece
+        body:
+          type: string
+          example: Fight Club is a film that gets better with every rewatch.
+        userId:
+          type: integer
+          description: ID of the user who wrote the review
+          example: 3
+        createdAt:
+          type: string
+          format: date-time
+          example: '2026-04-20T12:00:00Z'
+        updatedAt:
+          type: string
+          format: date-time
+          example: '2026-04-20T12:00:00Z'
+
+    ReviewListResponse:
+      type: object
+      required: [tmdbId, mediaType, totalReviews, page, totalPages, results]
+      properties:
+        tmdbId:
+          type: integer
+          example: 550
+        mediaType:
+          type: string
+          enum: [movie, tv]
+          example: movie
+        totalReviews:
+          type: integer
+          description: Total number of reviews submitted for this title
+          example: 1
+        page:
+          type: integer
+          example: 1
+        totalPages:
+          type: integer
+          example: 1
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Review'
+
     # -- Error response -------------------------
     ErrorResponse:
       type: object
@@ -771,3 +1320,16 @@ components:
         status:
           type: string
           example: OK
+
+  # ── Security Schemes ────────────────────────
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: >
+        RS256-signed JWT issued by Auth² (https://tcss-460-iam.onrender.com),
+        the course's shared OAuth2 + OIDC identity provider. Audience: group-6-api.
+        Obtain a token from the TCSS 460 Token Playground by selecting the
+        group-6-api audience. Tokens expire after one hour — use the Refresh
+        button in the playground to mint a new one without re-signing in.

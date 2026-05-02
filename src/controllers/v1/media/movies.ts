@@ -145,13 +145,15 @@ export const searchMovies = async (request: Request, response: Response) => {
       ? results.filter((movie) => movie.genres.some((genre) => genre.id === Number(genreId)))
       : results;
 
+    /**
+ * Commented Out Debug Log - Can be re-enabled if needed for troubleshooting TMDB search results and genre filtering
     console.log('DEBUG searchMovies', {
       rawLength: rawResults.length,
       resultLength: results.length,
       filteredLength: filteredResults.length,
       genreId,
     });
-
+*/
     response.status(200).json({
       page: Number(data['page'] ?? 1),
       totalPages: Number(data['total_pages'] ?? 1),
