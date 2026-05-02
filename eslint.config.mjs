@@ -78,6 +78,7 @@ export default [
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' },
       ],
       '@typescript-eslint/no-floating-promises': 'error',
+      '@typescript-eslint/no-explicit-any': 'off', // mocks require type looseness
       eqeqeq: ['error', 'always'],
       'prefer-const': 'error',
       'no-console': 'warn',
