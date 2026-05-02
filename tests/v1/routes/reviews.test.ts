@@ -80,13 +80,19 @@ describe('Reviews Router', () => {
     it('returns 201 and the created review on success', async () => {
       (prisma.review.create as jest.Mock).mockResolvedValue(mockReview);
 
-      const res = await request(app)
-        .post('/v1/reviews')
-        .set('Authorization', makeToken(1))
-        .send({ tmdbId: 27205, mediaType: 'movie', title: 'Great film', body: 'Loved every moment of it.' });
+      const res = await request(app).post('/v1/reviews').set('Authorization', makeToken(1)).send({
+        tmdbId: 27205,
+        mediaType: 'movie',
+        title: 'Great film',
+        body: 'Loved every moment of it.',
+      });
 
       expect(res.status).toBe(201);
-      expect(res.body).toMatchObject({ tmdbId: 27205, mediaType: 'movie', body: 'Loved every moment of it.' });
+      expect(res.body).toMatchObject({
+        tmdbId: 27205,
+        mediaType: 'movie',
+        body: 'Loved every moment of it.',
+      });
     });
 
     it('creates a review without an optional title', async () => {
@@ -232,18 +238,14 @@ describe('Reviews Router', () => {
     });
 
     it('returns 400 when id is not a number', async () => {
-      const res = await request(app)
-        .delete('/v1/reviews/abc')
-        .set('Authorization', makeToken(1));
+      const res = await request(app).delete('/v1/reviews/abc').set('Authorization', makeToken(1));
       expect(res.status).toBe(400);
     });
 
     it('returns 404 when review does not exist', async () => {
       (prisma.review.findUnique as jest.Mock).mockResolvedValue(null);
 
-      const res = await request(app)
-        .delete('/v1/reviews/999')
-        .set('Authorization', makeToken(1));
+      const res = await request(app).delete('/v1/reviews/999').set('Authorization', makeToken(1));
 
       expect(res.status).toBe(404);
     });
@@ -251,9 +253,7 @@ describe('Reviews Router', () => {
     it('returns 403 when user does not own the review', async () => {
       (prisma.review.findUnique as jest.Mock).mockResolvedValue({ ...mockReview, userId: 2 });
 
-      const res = await request(app)
-        .delete('/v1/reviews/1')
-        .set('Authorization', makeToken(1));
+      const res = await request(app).delete('/v1/reviews/1').set('Authorization', makeToken(1));
 
       expect(res.status).toBe(403);
     });
@@ -262,9 +262,7 @@ describe('Reviews Router', () => {
       (prisma.review.findUnique as jest.Mock).mockResolvedValue(mockReview);
       (prisma.review.delete as jest.Mock).mockResolvedValue(mockReview);
 
-      const res = await request(app)
-        .delete('/v1/reviews/1')
-        .set('Authorization', makeToken(1));
+      const res = await request(app).delete('/v1/reviews/1').set('Authorization', makeToken(1));
 
       expect(res.status).toBe(204);
     });

@@ -24,7 +24,6 @@ info:
     `User < Moderator < Admin < SuperAdmin < Owner`. Routes requiring elevated
     access use `requireRoleAtLeast('Admin')` or above.
 
-
 servers:
   - url: https://tcss460-team-6-api.onrender.com
     description: Deployed production server
@@ -41,7 +40,7 @@ tags:
   - name: Reviews
     description: User reviews for movies and TV shows
 
-security: []   # public by default; individual operations opt in
+security: [] # public by default; individual operations opt in
 
 # ─────────────────────────────────────────────
 #  PATHS
@@ -630,9 +629,9 @@ paths:
         '500':
           $ref: '#/components/responses/InternalError'
 
-# ─────────────────────────────────────────────
-#  COMPONENTS
-# ─────────────────────────────────────────────
+  # ─────────────────────────────────────────────
+  #  COMPONENTS
+  # ─────────────────────────────────────────────
 
   # ── Parameters ──────────────────────────────
   parameters:

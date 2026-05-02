@@ -31,7 +31,9 @@ export const getRatingsByTmdbId = async (request: Request, response: Response): 
   const pageSize = 20;
 
   if (!mediaType || (mediaType !== 'movie' && mediaType !== 'tv')) {
-    response.status(400).json({ error: 'Bad Request', message: 'mediaType must be "movie" or "tv"' });
+    response
+      .status(400)
+      .json({ error: 'Bad Request', message: 'mediaType must be "movie" or "tv"' });
     return;
   }
 
@@ -75,7 +77,9 @@ export const updateRating = async (request: Request, response: Response): Promis
   }
 
   if (existing.userId !== userId && role !== 'admin') {
-    response.status(403).json({ error: 'Forbidden', message: 'You do not have permission to modify this resource.' });
+    response
+      .status(403)
+      .json({ error: 'Forbidden', message: 'You do not have permission to modify this resource.' });
     return;
   }
 
@@ -98,7 +102,9 @@ export const deleteRating = async (request: Request, response: Response): Promis
   }
 
   if (existing.userId !== userId && role !== 'admin') {
-    response.status(403).json({ error: 'Forbidden', message: 'You do not have permission to modify this resource.' });
+    response
+      .status(403)
+      .json({ error: 'Forbidden', message: 'You do not have permission to modify this resource.' });
     return;
   }
 

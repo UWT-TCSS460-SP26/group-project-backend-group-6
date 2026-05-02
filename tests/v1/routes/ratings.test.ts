@@ -232,18 +232,14 @@ describe('Ratings Router', () => {
     });
 
     it('returns 400 when id is not a number', async () => {
-      const res = await request(app)
-        .delete('/v1/ratings/abc')
-        .set('Authorization', makeToken(1));
+      const res = await request(app).delete('/v1/ratings/abc').set('Authorization', makeToken(1));
       expect(res.status).toBe(400);
     });
 
     it('returns 404 when rating does not exist', async () => {
       (prisma.rating.findUnique as jest.Mock).mockResolvedValue(null);
 
-      const res = await request(app)
-        .delete('/v1/ratings/999')
-        .set('Authorization', makeToken(1));
+      const res = await request(app).delete('/v1/ratings/999').set('Authorization', makeToken(1));
 
       expect(res.status).toBe(404);
     });
@@ -251,9 +247,7 @@ describe('Ratings Router', () => {
     it('returns 403 when user does not own the rating', async () => {
       (prisma.rating.findUnique as jest.Mock).mockResolvedValue({ ...mockRating, userId: 2 });
 
-      const res = await request(app)
-        .delete('/v1/ratings/1')
-        .set('Authorization', makeToken(1));
+      const res = await request(app).delete('/v1/ratings/1').set('Authorization', makeToken(1));
 
       expect(res.status).toBe(403);
     });
@@ -262,9 +256,7 @@ describe('Ratings Router', () => {
       (prisma.rating.findUnique as jest.Mock).mockResolvedValue(mockRating);
       (prisma.rating.delete as jest.Mock).mockResolvedValue(mockRating);
 
-      const res = await request(app)
-        .delete('/v1/ratings/1')
-        .set('Authorization', makeToken(1));
+      const res = await request(app).delete('/v1/ratings/1').set('Authorization', makeToken(1));
 
       expect(res.status).toBe(204);
     });

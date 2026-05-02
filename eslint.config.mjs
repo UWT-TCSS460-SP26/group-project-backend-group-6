@@ -84,7 +84,15 @@ export default [
     },
   },
   {
-    ignores: ['dist/', 'node_modules/', 'coverage/', 'jest.config.js', 'modules/'],
+    ignores: [
+      'dist/',
+      'node_modules/',
+      'coverage/',
+      'jest.config.js',
+      'modules/',
+      'prisma/',
+      'src/generated/**',
+    ],
   },
   prettierConfig,
 ];
