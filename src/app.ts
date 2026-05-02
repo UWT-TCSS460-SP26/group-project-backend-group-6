@@ -9,12 +9,10 @@ import { moviesRouter } from './routes/v1/media/movies';
 import { tvRouter } from './routes/v1/media/tv';
 import { ratingsRouter } from './routes/v1/ratings';
 import { reviewsRouter } from './routes/v1/reviews';
-import devAuthRouter from './routes/devAuth';
 const app = express();
 
 app.use(cors());
 app.use(express.json());
-app.use('/auth', devAuthRouter);
 
 const specPath = path.resolve(process.cwd(), 'openapi.yaml');
 const specFile = fs.readFileSync(specPath, 'utf8');

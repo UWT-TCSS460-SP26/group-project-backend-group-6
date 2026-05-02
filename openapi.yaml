@@ -13,7 +13,7 @@ info:
 
     Sprint 2 adds user-generated content: ratings and reviews are persisted in
     PostgreSQL via Prisma. Write endpoints require a Bearer JWT obtained from
-    `POST /auth/dev-login` (local development only).
+    
 
 servers:
   - url: https://tcss460-team-6-api.onrender.com
@@ -26,8 +26,6 @@ tags:
     description: Search, browse, and retrieve movie data
   - name: TV Shows
     description: Search, browse, and retrieve TV show data
-  - name: Auth
-    description: Development-only authentication (replaced by Auth-Squared in Sprint 3)
   - name: Ratings
     description: User ratings for movies and TV shows
   - name: Reviews
@@ -337,37 +335,7 @@ paths:
           $ref: '#/components/responses/InternalError'
 
   # ── Auth ─────────────────────────────────────
-  /auth/dev-login:
-    post:
-      tags: [Auth]
-      summary: Mint a dev JWT (local development only)
-      description: >
-        **Development only — do not expose publicly.**
-        Accepts a username, find-or-creates a matching user record, and returns a
-        signed JWT. No password is required. This endpoint will be removed in Sprint 3
-        when Auth-Squared integration is complete.
-      operationId: devLogin
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DevLoginRequest'
-            example:
-              username: alice
-      responses:
-        '200':
-          description: JWT minted successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DevLoginResponse'
-              example:
-                token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsInVzZXJuYW1lIjoiYWxpY2UiLCJyb2xlIjoidXNlciJ9.abc123
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '500':
-          $ref: '#/components/responses/InternalError'
+  
 
   # ── Ratings ──────────────────────────────────
   /ratings:
@@ -658,15 +626,6 @@ paths:
 # ─────────────────────────────────────────────
 #  COMPONENTS
 # ─────────────────────────────────────────────
-components:
-  securitySchemes:
-    BearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-      description: >
-        JWT obtained from `POST /auth/dev-login`. Include as
-        `Authorization: Bearer <token>` on all write endpoints.
 
   # ── Parameters ──────────────────────────────
   parameters:
@@ -1138,24 +1097,9 @@ components:
                 $ref: '#/components/schemas/TVShowCard'
 
     # -- Auth -----------------------------------
-    DevLoginRequest:
-      type: object
-      required: [username]
-      properties:
-        username:
-          type: string
-          minLength: 1
-          description: Username to mint a token for. User is created if they do not exist.
-          example: alice
+    
 
-    DevLoginResponse:
-      type: object
-      required: [token]
-      properties:
-        token:
-          type: string
-          description: Signed JWT to use as a Bearer token on protected endpoints
-          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+    
 
     # -- Ratings --------------------------------
     RatingRequest:
