@@ -10,9 +10,10 @@ import { ReviewBody, PatchReviewBody } from '../../middleware/validationZod';
 export const createReview = async (request: Request, response: Response): Promise<void> => {
   const { tmdbId, mediaType, title, body } = request.body as ReviewBody;
   const userId = request.user!.sub;
+  const numericUserId = parseInt(userId, 10);
 
   const review = await prisma.review.create({
-    data: { userId, tmdbId, mediaType, title, body },
+    data: { userId: numericUserId, tmdbId, mediaType, title, body },
   });
 
   response.status(201).json(review);
@@ -66,6 +67,7 @@ export const updateReview = async (request: Request, response: Response): Promis
   const id = Number(request.params.id);
   const { title, body } = request.body as PatchReviewBody;
   const { sub: userId, role } = request.user!;
+  const numericUserId = parseInt(userId, 10);
 
   const existing = await prisma.review.findUnique({ where: { id } });
   if (!existing) {
@@ -73,7 +75,7 @@ export const updateReview = async (request: Request, response: Response): Promis
     return;
   }
 
-  if (existing.userId !== userId && role !== 'admin') {
+  if (existing.userId !== numericUserId && role !== 'Admin') {
     response
       .status(403)
       .json({ error: 'Forbidden', message: 'You do not have permission to modify this resource.' });
@@ -98,6 +100,7 @@ export const updateReview = async (request: Request, response: Response): Promis
 export const deleteReview = async (request: Request, response: Response): Promise<void> => {
   const id = Number(request.params.id);
   const { sub: userId, role } = request.user!;
+  const numericUserId = parseInt(userId, 10);
 
   const existing = await prisma.review.findUnique({ where: { id } });
   if (!existing) {
@@ -105,7 +108,7 @@ export const deleteReview = async (request: Request, response: Response): Promis
     return;
   }
 
-  if (existing.userId !== userId && role !== 'admin') {
+  if (existing.userId !== numericUserId && role !== 'Admin') {
     response
       .status(403)
       .json({ error: 'Forbidden', message: 'You do not have permission to modify this resource.' });

@@ -10,11 +10,12 @@ import { RatingBody, PatchRatingBody } from '../../middleware/validationZod';
 export const createOrUpdateRating = async (request: Request, response: Response): Promise<void> => {
   const { tmdbId, mediaType, score } = request.body as RatingBody;
   const userId = request.user!.sub;
+  const numericUserId = parseInt(userId, 10);
 
   const rating = await prisma.rating.upsert({
-    where: { userId_tmdbId_mediaType: { userId, tmdbId, mediaType } },
+    where: { userId_tmdbId_mediaType: { userId: numericUserId, tmdbId, mediaType } },
     update: { score },
-    create: { userId, tmdbId, mediaType, score },
+    create: { userId: numericUserId, tmdbId, mediaType, score },
   });
 
   response.status(200).json(rating);
@@ -69,6 +70,7 @@ export const updateRating = async (request: Request, response: Response): Promis
   const id = Number(request.params.id);
   const { score } = request.body as PatchRatingBody;
   const { sub: userId, role } = request.user!;
+  const numericUserId = parseInt(userId, 10);
 
   const existing = await prisma.rating.findUnique({ where: { id } });
   if (!existing) {
@@ -76,7 +78,7 @@ export const updateRating = async (request: Request, response: Response): Promis
     return;
   }
 
-  if (existing.userId !== userId && role !== 'admin') {
+  if (existing.userId !== numericUserId && role !== 'Admin') {
     response
       .status(403)
       .json({ error: 'Forbidden', message: 'You do not have permission to modify this resource.' });
@@ -94,6 +96,7 @@ export const updateRating = async (request: Request, response: Response): Promis
 export const deleteRating = async (request: Request, response: Response): Promise<void> => {
   const id = Number(request.params.id);
   const { sub: userId, role } = request.user!;
+  const numericUserId = parseInt(userId, 10);
 
   const existing = await prisma.rating.findUnique({ where: { id } });
   if (!existing) {
@@ -101,7 +104,7 @@ export const deleteRating = async (request: Request, response: Response): Promis
     return;
   }
 
-  if (existing.userId !== userId && role !== 'admin') {
+  if (existing.userId !== numericUserId && role !== 'Admin') {
     response
       .status(403)
       .json({ error: 'Forbidden', message: 'You do not have permission to modify this resource.' });
