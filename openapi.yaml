@@ -12,8 +12,18 @@ info:
     interact with any third-party service directly.
 
     Sprint 2 adds user-generated content: ratings and reviews are persisted in
-    PostgreSQL via Prisma. Write endpoints require a Bearer JWT obtained from
-    
+    PostgreSQL via Prisma. Sprint 3 replaces dev-login with real authentication
+    via Auth² — the course's shared OAuth2 + OIDC identity provider.
+
+    **Authentication:** Write endpoints require a Bearer JWT issued by Auth²
+    (`https://tcss-460-iam.onrender.com`), scoped to the `group-6-api` audience.
+    Obtain a token from the TCSS 460 Token Playground by selecting the
+    `group-6-api` audience. Tokens expire after one hour.
+
+    **Role gating:** Protected routes use a 5-tier hierarchy —
+    `User < Moderator < Admin < SuperAdmin < Owner`. Routes requiring elevated
+    access use `requireRoleAtLeast('Admin')` or above.
+
 
 servers:
   - url: https://tcss460-team-6-api.onrender.com
@@ -333,9 +343,6 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalError'
-
-  # ── Auth ─────────────────────────────────────
-  
 
   # ── Ratings ──────────────────────────────────
   /ratings:
@@ -1096,11 +1103,6 @@ paths:
               items:
                 $ref: '#/components/schemas/TVShowCard'
 
-    # -- Auth -----------------------------------
-    
-
-    
-
     # -- Ratings --------------------------------
     RatingRequest:
       type: object
@@ -1319,3 +1321,16 @@ paths:
         status:
           type: string
           example: OK
+
+  # ── Security Schemes ────────────────────────
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: >
+        RS256-signed JWT issued by Auth² (https://tcss-460-iam.onrender.com),
+        the course's shared OAuth2 + OIDC identity provider. Audience: group-6-api.
+        Obtain a token from the TCSS 460 Token Playground by selecting the
+        group-6-api audience. Tokens expire after one hour — use the Refresh
+        button in the playground to mint a new one without re-signing in.
