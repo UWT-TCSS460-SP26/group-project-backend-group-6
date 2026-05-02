@@ -5,6 +5,10 @@ import { prisma } from '../../../src/lib/prisma';
 
 jest.mock('../../../src/lib/prisma', () => ({
   prisma: {
+    user: {
+      findUnique: jest.fn(),
+      upsert: jest.fn(),
+    },
     review: {
       create: jest.fn(),
       findMany: jest.fn(),
@@ -21,6 +25,7 @@ let mockUser = { sub: '1', role: 'user', email: 'user1@test.local' };
 jest.mock('../../../src/middleware/requireAuth', () => ({
   requireAuth: [
     (req: any, _res: any, next: any) => {
+      req.headers.authorization = 'Bearer fake-token';
       req.user = mockUser;
       next();
     },
@@ -42,7 +47,22 @@ const mockReview = {
   updatedAt: new Date().toISOString(),
 };
 
+const mockLocalUser = {
+  id: 1,
+  subjectId: '1',
+  email: 'user1@test.local',
+  username: 'user1',
+  firstName: null,
+  lastName: null,
+  role: 'User',
+  createdAt: new Date(),
+};
+
 describe('Reviews Router', () => {
+  beforeEach(() => {
+    (prisma.user.findUnique as jest.Mock).mockResolvedValue(mockLocalUser);
+  });
+
   afterEach(() => {
     jest.clearAllMocks();
     mockUser = { sub: '1', role: 'user', email: 'user1@test.local' };
