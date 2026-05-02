@@ -27,7 +27,7 @@ jobs:
         run: npm run lint
 
       - name: Generate Prisma Client
-        run: npx prisma generate
+        run: npx prisma generate --no-engine
 
       - name: Build
         run: npm run build
