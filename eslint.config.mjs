@@ -92,6 +92,7 @@ export default [
       'modules/',
       'prisma/',
       'src/generated/**',
+      'meetings.md',
     ],
   },
   prettierConfig,
