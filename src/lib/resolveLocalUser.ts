@@ -31,10 +31,7 @@ interface UserInfoResponse {
  *                 the helper below.
  * @param authUser The decoded payload already on req.user (from requireAuth).
  */
-export async function resolveLocalUser(
-  token: string,
-  authUser: AuthenticatedUser
-): Promise<User> {
+export async function resolveLocalUser(token: string, authUser: AuthenticatedUser): Promise<User> {
   // ── Fast path ────────────────────────────────────────────────────────────
   const existing = await prisma.user.findUnique({
     where: { subjectId: authUser.sub },
@@ -64,10 +61,10 @@ export async function resolveLocalUser(
   // Derive best-available values with sensible fallbacks.
   // Auth² may omit fields for incomplete profiles — we never store undefined.
   const subjectId = authUser.sub;
-  const email     = info.email      ?? authUser.email ?? `${subjectId}@unknown.local`;
-  const username  = info.preferred_username ?? subjectId;
-  const firstName = info.given_name  ?? null;
-  const lastName  = info.family_name ?? null;
+  const email = info.email ?? authUser.email ?? `${subjectId}@unknown.local`;
+  const username = info.preferred_username ?? subjectId;
+  const firstName = info.given_name ?? null;
+  const lastName = info.family_name ?? null;
 
   // ── Upsert ───────────────────────────────────────────────────────────────
   // `upsert` is safe under concurrent first requests — the unique constraint on
@@ -101,7 +98,7 @@ export async function resolveLocalUser(
  */
 export function bearerToken(req: { headers: { authorization?: string } }): string {
   const header = req.headers.authorization ?? '';
-  const token  = header.startsWith('Bearer ') ? header.slice(7) : header;
+  const token = header.startsWith('Bearer ') ? header.slice(7) : header;
   if (!token) throw new Error('Authorization header is missing or malformed');
   return token;
 }

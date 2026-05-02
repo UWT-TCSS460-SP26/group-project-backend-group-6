@@ -5,17 +5,83 @@ const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
 const prisma = new PrismaClient({ adapter });
 
 const users = [
-  { email: 'admin@dev.local', username: 'admin', displayName: 'Admin', role: Role.Admin, subjectId: 'seed|admin' },
-  { email: 'alice@dev.local', username: 'alice', displayName: 'Alice', role: Role.User,  subjectId: 'seed|alice' },
-  { email: 'bob@dev.local',   username: 'bob',   displayName: 'Bob',   role: Role.User,  subjectId: 'seed|bob' },
-  { email: 'carol@dev.local', username: 'carol', displayName: 'Carol', role: Role.User,  subjectId: 'seed|carol' },
-  { email: 'dave@dev.local',  username: 'dave',  displayName: 'Dave',  role: Role.User,  subjectId: 'seed|dave' },
-  { email: 'eve@dev.local',   username: 'eve',   displayName: 'Eve',   role: Role.User,  subjectId: 'seed|eve' },
-  { email: 'frank@dev.local', username: 'frank', displayName: 'Frank', role: Role.User,  subjectId: 'seed|frank' },
-  { email: 'grace@dev.local', username: 'grace', displayName: 'Grace', role: Role.User,  subjectId: 'seed|grace' },
-  { email: 'henry@dev.local', username: 'henry', displayName: 'Henry', role: Role.User,  subjectId: 'seed|henry' },
-  { email: 'iris@dev.local',  username: 'iris',  displayName: 'Iris',  role: Role.User,  subjectId: 'seed|iris' },
-  { email: 'jack@dev.local',  username: 'jack',  displayName: 'Jack',  role: Role.User,  subjectId: 'seed|jack' },
+  {
+    email: 'admin@dev.local',
+    username: 'admin',
+    displayName: 'Admin',
+    role: Role.Admin,
+    subjectId: 'seed|admin',
+  },
+  {
+    email: 'alice@dev.local',
+    username: 'alice',
+    displayName: 'Alice',
+    role: Role.User,
+    subjectId: 'seed|alice',
+  },
+  {
+    email: 'bob@dev.local',
+    username: 'bob',
+    displayName: 'Bob',
+    role: Role.User,
+    subjectId: 'seed|bob',
+  },
+  {
+    email: 'carol@dev.local',
+    username: 'carol',
+    displayName: 'Carol',
+    role: Role.User,
+    subjectId: 'seed|carol',
+  },
+  {
+    email: 'dave@dev.local',
+    username: 'dave',
+    displayName: 'Dave',
+    role: Role.User,
+    subjectId: 'seed|dave',
+  },
+  {
+    email: 'eve@dev.local',
+    username: 'eve',
+    displayName: 'Eve',
+    role: Role.User,
+    subjectId: 'seed|eve',
+  },
+  {
+    email: 'frank@dev.local',
+    username: 'frank',
+    displayName: 'Frank',
+    role: Role.User,
+    subjectId: 'seed|frank',
+  },
+  {
+    email: 'grace@dev.local',
+    username: 'grace',
+    displayName: 'Grace',
+    role: Role.User,
+    subjectId: 'seed|grace',
+  },
+  {
+    email: 'henry@dev.local',
+    username: 'henry',
+    displayName: 'Henry',
+    role: Role.User,
+    subjectId: 'seed|henry',
+  },
+  {
+    email: 'iris@dev.local',
+    username: 'iris',
+    displayName: 'Iris',
+    role: Role.User,
+    subjectId: 'seed|iris',
+  },
+  {
+    email: 'jack@dev.local',
+    username: 'jack',
+    displayName: 'Jack',
+    role: Role.User,
+    subjectId: 'seed|jack',
+  },
 ];
 
 async function main() {
@@ -39,16 +105,16 @@ async function main() {
 
   // 10 ratings spread across movies and TV — unique per [userId, tmdbId, mediaType]
   const ratings = [
-    { username: 'alice', score: 9,  tmdbId: 27205,  mediaType: 'movie' as const }, // Inception
-    { username: 'bob',   score: 8,  tmdbId: 157336, mediaType: 'movie' as const }, // Interstellar
-    { username: 'carol', score: 10, tmdbId: 278,    mediaType: 'movie' as const }, // Shawshank Redemption
-    { username: 'dave',  score: 7,  tmdbId: 550,    mediaType: 'movie' as const }, // Fight Club
-    { username: 'eve',   score: 9,  tmdbId: 680,    mediaType: 'movie' as const }, // Pulp Fiction
-    { username: 'frank', score: 8,  tmdbId: 603,    mediaType: 'movie' as const }, // The Matrix
-    { username: 'grace', score: 10, tmdbId: 1396,   mediaType: 'tv' as const },    // Breaking Bad
-    { username: 'henry', score: 9,  tmdbId: 1399,   mediaType: 'tv' as const },    // Game of Thrones
-    { username: 'iris',  score: 8,  tmdbId: 66732,  mediaType: 'tv' as const },    // Stranger Things
-    { username: 'jack',  score: 7,  tmdbId: 1396,   mediaType: 'tv' as const },    // Breaking Bad
+    { username: 'alice', score: 9, tmdbId: 27205, mediaType: 'movie' as const }, // Inception
+    { username: 'bob', score: 8, tmdbId: 157336, mediaType: 'movie' as const }, // Interstellar
+    { username: 'carol', score: 10, tmdbId: 278, mediaType: 'movie' as const }, // Shawshank Redemption
+    { username: 'dave', score: 7, tmdbId: 550, mediaType: 'movie' as const }, // Fight Club
+    { username: 'eve', score: 9, tmdbId: 680, mediaType: 'movie' as const }, // Pulp Fiction
+    { username: 'frank', score: 8, tmdbId: 603, mediaType: 'movie' as const }, // The Matrix
+    { username: 'grace', score: 10, tmdbId: 1396, mediaType: 'tv' as const }, // Breaking Bad
+    { username: 'henry', score: 9, tmdbId: 1399, mediaType: 'tv' as const }, // Game of Thrones
+    { username: 'iris', score: 8, tmdbId: 66732, mediaType: 'tv' as const }, // Stranger Things
+    { username: 'jack', score: 7, tmdbId: 1396, mediaType: 'tv' as const }, // Breaking Bad
   ];
 
   for (const r of ratings) {
