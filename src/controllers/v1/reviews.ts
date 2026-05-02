@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { prisma } from '../../lib/prisma';
+import { resolveLocalUser, bearerToken } from '../../lib/resolveLocalUser';
 import { ReviewBody, PatchReviewBody } from '../../middleware/validationZod';
 
 /**
@@ -9,11 +10,13 @@ import { ReviewBody, PatchReviewBody } from '../../middleware/validationZod';
  */
 export const createReview = async (request: Request, response: Response): Promise<void> => {
   const { tmdbId, mediaType, title, body } = request.body as ReviewBody;
-  const userId = request.user!.sub;
-  const numericUserId = parseInt(userId, 10);
+
+  // resolveLocalUser gives us the integer PK we can use as a FK.
+  // Auth²'s sub is a string like "auth2|abc123" — never parseInt it directly.
+  const localUser = await resolveLocalUser(bearerToken(request), request.user!);
 
   const review = await prisma.review.create({
-    data: { userId: numericUserId, tmdbId, mediaType, title, body },
+    data: { userId: localUser.id, tmdbId, mediaType, title, body },
   });
 
   response.status(201).json(review);
@@ -60,14 +63,15 @@ export const getReviewsByTmdbId = async (request: Request, response: Response): 
 
 /**
  * PUT /reviews/:id
- * Updates a review. User must own the review (admins bypass ownership check).
+ * Updates a review. User must own the review (Admins and above bypass ownership check).
  * At least one of title or body must be provided (enforced by Zod).
  */
 export const updateReview = async (request: Request, response: Response): Promise<void> => {
   const id = Number(request.params.id);
   const { title, body } = request.body as PatchReviewBody;
-  const { sub: userId, role } = request.user!;
-  const numericUserId = parseInt(userId, 10);
+
+  const localUser = await resolveLocalUser(bearerToken(request), request.user!);
+  const { role } = request.user!;
 
   const existing = await prisma.review.findUnique({ where: { id } });
   if (!existing) {
@@ -75,7 +79,7 @@ export const updateReview = async (request: Request, response: Response): Promis
     return;
   }
 
-  if (existing.userId !== numericUserId && role !== 'Admin') {
+  if (existing.userId !== localUser.id && role !== 'Admin') {
     response
       .status(403)
       .json({ error: 'Forbidden', message: 'You do not have permission to modify this resource.' });
@@ -95,12 +99,13 @@ export const updateReview = async (request: Request, response: Response): Promis
 
 /**
  * DELETE /reviews/:id
- * Deletes a review. User must own the review (admins bypass ownership check).
+ * Deletes a review. User must own the review (Admins and above bypass ownership check).
  */
 export const deleteReview = async (request: Request, response: Response): Promise<void> => {
   const id = Number(request.params.id);
-  const { sub: userId, role } = request.user!;
-  const numericUserId = parseInt(userId, 10);
+
+  const localUser = await resolveLocalUser(bearerToken(request), request.user!);
+  const { role } = request.user!;
 
   const existing = await prisma.review.findUnique({ where: { id } });
   if (!existing) {
@@ -108,7 +113,7 @@ export const deleteReview = async (request: Request, response: Response): Promis
     return;
   }
 
-  if (existing.userId !== numericUserId && role !== 'Admin') {
+  if (existing.userId !== localUser.id && role !== 'Admin') {
     response
       .status(403)
       .json({ error: 'Forbidden', message: 'You do not have permission to modify this resource.' });

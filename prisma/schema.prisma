@@ -1,21 +1,26 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
   output   = "../src/generated/prisma"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider  = "postgresql"
+
 }
 
+// ----------------------------------------------------------------------------
+// Auth² roles — PascalCase strings, matching what the token carries on `role`.
+// Ordered lowest → highest privilege to mirror ROLE_HIERARCHY in requireAuth.ts
+// ----------------------------------------------------------------------------
 enum Role {
-  user
-  admin
+  User
+  Moderator
+  Admin
+  SuperAdmin
+  Owner
 }
 
 enum MediaType {
@@ -23,13 +28,35 @@ enum MediaType {
   tv
 }
 
+// ----------------------------------------------------------------------------
+// Issue status workflow (designed in Sprint 3, routes land in Sprint 4)
+// Open → InProgress → Resolved | Wontfix | Closed
+// ----------------------------------------------------------------------------
+enum IssueStatus {
+  Open
+  InProgress
+  Resolved
+  Closed
+  Wontfix
+}
+
+// ----------------------------------------------------------------------------
+// User
+// id        — local integer PK; all FK relations stay numeric (Rating, Review)
+// subjectId — stable Auth² subject claim (the `sub` field on the JWT)
+//             This is the join key between local rows and the identity provider.
+//             It is set on first authenticated request via resolveLocalUser.
+// ----------------------------------------------------------------------------
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  username  String   @unique
+  id          Int      @id @default(autoincrement())
+  subjectId   String   @unique // Auth² `sub` — never changes, never reused
+  email       String   @unique
+  username    String   @unique
+  firstName   String?
+  lastName    String?
   displayName String?
-  role      Role     @default(user)
-  createdAt DateTime @default(now())
+  role        Role     @default(User)
+  createdAt   DateTime @default(now())
 
   ratings Rating[]
   reviews Review[]
@@ -37,7 +64,7 @@ model User {
 
 model Rating {
   id        Int       @id @default(autoincrement())
-  score     Int       // recommend 1–10
+  score     Int       // 1–10
   tmdbId    Int
   mediaType MediaType
   userId    Int
@@ -47,12 +74,12 @@ model Rating {
   user User @relation(fields: [userId], references: [id])
 
   @@unique([userId, tmdbId, mediaType]) // one rating per user per content
-  @@index([tmdbId, mediaType])          // makes public GETs fast
+  @@index([tmdbId, mediaType])
 }
 
 model Review {
   id        Int       @id @default(autoincrement())
-  title     String?   // optional
+  title     String?
   body      String
   tmdbId    Int
   mediaType MediaType
@@ -63,4 +90,20 @@ model Review {
   user User @relation(fields: [userId], references: [id])
 
   @@index([tmdbId, mediaType])
+}
+
+// ----------------------------------------------------------------------------
+// Issue — public bug-report submissions (Sprint 3: write route only)
+// Admin read/triage routes come in Sprint 4. Table ships now so the migration
+// is already in production before your downstream partner arrives in Sprint 5.
+// ----------------------------------------------------------------------------
+model Issue {
+  id              Int         @id @default(autoincrement())
+  title           String
+  description     String
+  reproSteps      String?
+  reporterContact String?     // optional email/name — no auth required to file
+  status          IssueStatus @default(Open)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
 }
