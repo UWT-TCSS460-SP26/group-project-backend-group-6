@@ -24,15 +24,17 @@ declare global {
   }
 }
 
-const issuer = process.env.AUTH_ISSUER;
+const rawIssuer = process.env.AUTH_ISSUER;
 const audience = process.env.API_AUDIENCE;
 
-if (!issuer || !audience) {
+if (!rawIssuer || !audience) {
   // Fail fast at boot — middleware would surface this as 500 on every request otherwise.
   throw new Error(
     'AUTH_ISSUER and API_AUDIENCE must be set. See .env.example for the auth-squared integration.'
   );
 }
+
+const issuer = rawIssuer.replace(/\/$/, '');
 
 const verifyJwt = expressjwt({
   secret: jwksRsa.expressJwtSecret({
