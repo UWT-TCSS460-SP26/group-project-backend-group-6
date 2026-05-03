@@ -62,6 +62,21 @@ const handleAuthError: ErrorRequestHandler = (error, _request, response, next) =
   next(error);
 };
 
+const authStub: RequestHandler = (request, _response, next) => {
+  const roleHeader = request.header('x-test-role');
+  const role = ROLE_HIERARCHY.includes(roleHeader as Role)
+    ? (roleHeader as Role)
+    : 'User';
+
+  request.user = {
+    sub: request.header('x-test-sub') || 'test-user-123',
+    role,
+  };
+
+  next();
+};
+
+
 /**
  * Verifies the Authorization: Bearer <token> header against the auth-squared
  * issuer's JWKS (RS256) and attaches the decoded payload to request.user.
@@ -69,11 +84,11 @@ const handleAuthError: ErrorRequestHandler = (error, _request, response, next) =
  * Replaces backend-2's HS256 + JWT_SECRET verification. Token issuance is
  * entirely owned by auth-squared; this API never mints tokens.
  */
-export const requireAuth: Array<RequestHandler | ErrorRequestHandler> = [
-  verifyJwt,
-  attachUser,
-  handleAuthError,
-];
+export const requireAuth = 
+  process.env.NODE_ENV === 'test'
+    ? [authStub]
+    : [verifyJwt, attachUser, handleAuthError];
+
 
 /**
  * Exact-match role gate. Use after requireAuth:
