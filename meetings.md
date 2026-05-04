@@ -247,3 +247,46 @@ We will try our best! Nos podemos! Si nos podamos!
 - Resolved, discussed the implementations developed for Ratings and Review DB
 
 - Manually tested the CRUD routes as a group in postman so we can all understand how they work and the process a browser/user will go through when moving through our API
+
+  # Group 6 2026-05-01 Sprint 3 Meeting 1 (8:15 - 9:00)
+
+**Modality: Discord**
+
+**In attendance: Luke, Jayda, Connor, John**
+**Notes taker: Jayda**
+**Meeting Manager: Luke**
+-    Split Sprint 3 across 4 people, each owning their work and documentation
+  
+-    Used Claude to divide tasks evenly
+  
+-    Connor (Person 1) — Auth middleware
+  
+-    Jayda (Person 2) — Schema & user identity
+  
+-    John (Person 3) — Testing & bug report route
+  
+-    Luke (Person 4) — Deployment & enriched route
+  
+-    Hosting database on Supabase
+  
+-    Sprint 2 branch needs to be merged into main before deploy (Luke's task)
+  
+-    Suite must be green (John) before Luke deploys
+  
+-    Each person writes their own docs/OpenAPI entries
+
+# Group 6 2026-05-03 Sprint 3 Meeting 2 (4:30 - 6:30)
+
+**Modality: Discord**
+
+**In attendance: Luke, Jayda, Connor, John**
+**Notes taker: Jayda**
+**Meeting Manager: Luke**
+- Code review and final checkup
+
+- Ran tests together, added finishing fixes to sprint 3 work
+  
+- Merged code!
+  
+
+
