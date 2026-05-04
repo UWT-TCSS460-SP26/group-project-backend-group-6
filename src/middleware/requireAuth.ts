@@ -34,17 +34,27 @@ if (!issuer || !audience) {
   );
 }
 
+const jwksSecret = jwksRsa.expressJwtSecret({
+  jwksUri: `${issuer}/.well-known/jwks.json`,
+  cache: true,
+  cacheMaxAge: 10 * 60 * 1000,
+  rateLimit: true,
+  jwksRequestsPerMinute: 10,
+});
+
 const verifyJwt = expressjwt({
-  secret: jwksRsa.expressJwtSecret({
-    jwksUri: `${issuer}/.well-known/jwks.json`,
-    cache: true,
-    cacheMaxAge: 10 * 60 * 1000,
-    rateLimit: true,
-    jwksRequestsPerMinute: 10,
-  }),
+  secret: jwksSecret,
   audience,
   issuer,
   algorithms: ['RS256'],
+});
+
+const verifyJwtOptional = expressjwt({
+  secret: jwksSecret,
+  audience,
+  issuer,
+  algorithms: ['RS256'],
+  credentialsRequired: false,
 });
 
 export const attachUser = (request: JwtRequest, _response: Response, next: NextFunction): void => {
@@ -64,6 +74,12 @@ export const handleAuthError: ErrorRequestHandler = (error, _request, response, 
 
 export const requireAuth: Array<RequestHandler | ErrorRequestHandler> = [
   verifyJwt,
+  attachUser,
+  handleAuthError,
+];
+
+export const optionalAuth: Array<RequestHandler | ErrorRequestHandler> = [
+  verifyJwtOptional,
   attachUser,
   handleAuthError,
 ];
