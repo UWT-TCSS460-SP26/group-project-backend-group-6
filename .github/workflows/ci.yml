@@ -30,6 +30,7 @@ jobs:
         run: npx prisma generate
         env:
           DATABASE_URL: 'postgresql://fake:fake@localhost:5432/fake'
+          DIRECT_URL: 'postgresql://fake:fake@localhost:5432/fake'
 
       - name: Build
         run: npm run build
