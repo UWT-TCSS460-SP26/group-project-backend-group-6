@@ -31,6 +31,7 @@ jest.mock('../../../src/middleware/requireAuth', () => ({
       next();
     },
   ],
+  optionalAuth: [(_req: any, _res: any, next: any) => next()],
   requireRole: () => (_req: any, _res: any, next: any) => next(),
   requireRoleAtLeast: () => (_req: any, _res: any, next: any) => next(),
   hasRoleAtLeast: () => true,

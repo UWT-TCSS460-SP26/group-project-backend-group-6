@@ -39,6 +39,8 @@ tags:
     description: User ratings for movies and TV shows
   - name: Reviews
     description: User reviews for movies and TV shows
+  - name: Issues
+    description: Public bug report and feedback submissions
 
 security: [] # public by default; individual operations opt in
 
@@ -65,7 +67,7 @@ paths:
                 timestamp: '2026-04-16T10:30:00Z'
 
   # ── Movies ──────────────────────────────────
-  /media/movies:
+  /v1/media/movies:
     get:
       tags: [Movies]
       summary: Search movies
@@ -106,7 +108,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalError'
 
-  /media/movies/popular:
+  /v1/media/movies/popular:
     get:
       tags: [Movies]
       summary: Popular movies
@@ -142,7 +144,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalError'
 
-  /media/movies/{id}:
+  /v1/media/movies/{id}:
     get:
       tags: [Movies]
       summary: Movie details
@@ -199,8 +201,78 @@ paths:
         '500':
           $ref: '#/components/responses/InternalError'
 
+  /v1/media/movies/{id}/enriched:
+    get:
+      tags: [Movies]
+      summary: Enriched movie detail
+      description: >
+        Returns TMDB movie metadata combined with community aggregate data in a
+        single response. The `tmdb` block contains the same fields as
+        GET /media/movies/{id}. The `community` block contains the average
+        rating, total review count, and up to 3 recent reviews inline — enough
+        for the frontend to decide whether to show a "Load more" button without
+        a second request.
+
+
+        **Optional authentication:** Send a Bearer token to receive a `myRating`
+        field in the `community` block (your own score, or `null` if you have
+        not rated this title yet). The route is fully public without a token.
+      operationId: getEnrichedMovieDetail
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/mediaIdParam'
+      responses:
+        '200':
+          description: Enriched movie detail with community stats
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnrichedMovieDetail'
+              example:
+                tmdb:
+                  id: 27205
+                  title: Inception
+                  tagline: 'Your mind is the scene of the crime.'
+                  overview: 'A thief who steals corporate secrets through the use of dream-sharing technology is given the inverse task of planting an idea into the mind of a C.E.O.'
+                  releaseYear: 2010
+                  releaseDate: '2010-07-15'
+                  runtimeMinutes: 148
+                  posterUrl: 'https://image.tmdb.org/t/p/w500/9gk7adHYeDvHkCSEqAvQNLV5Uge.jpg'
+                  backdropUrl: 'https://image.tmdb.org/t/p/original/s3TBrRGB1iav7gFOCNx3H31MoES.jpg'
+                  status: Released
+                  genres:
+                    - id: 28
+                      name: Action
+                    - id: 878
+                      name: Science Fiction
+                  cast:
+                    - name: Leonardo DiCaprio
+                      character: Dom Cobb
+                      profileUrl: 'https://image.tmdb.org/t/p/w185/wo2hJpn04vbtmh0B9utCFdsQhxM.jpg'
+                  similar: []
+                community:
+                  averageRating: 4.3
+                  reviewCount: 12
+                  recentReviews:
+                    - id: 1
+                      title: Mind-bending
+                      body: Best movie I have ever seen.
+                      author: johndoe
+                      createdAt: '2026-04-20T12:00:00Z'
+                  myRating: 8
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '502':
+          description: Failed to reach TMDB upstream
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Failed to reach TMDB
+
   # ── TV Shows ─────────────────────────────────
-  /media/tv:
+  /v1/media/tv:
     get:
       tags: [TV Shows]
       summary: Search TV shows
@@ -241,7 +313,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalError'
 
-  /media/tv/popular:
+  /v1/media/tv/popular:
     get:
       tags: [TV Shows]
       summary: Popular TV shows
@@ -277,7 +349,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalError'
 
-  /media/tv/{id}:
+  /v1/media/tv/{id}:
     get:
       tags: [TV Shows]
       summary: TV show details
@@ -343,8 +415,81 @@ paths:
         '500':
           $ref: '#/components/responses/InternalError'
 
+  /v1/media/tv/{id}/enriched:
+    get:
+      tags: [TV Shows]
+      summary: Enriched TV show detail
+      description: >
+        Returns TMDB TV show metadata combined with community aggregate data in a
+        single response. The `tmdb` block contains the same fields as
+        GET /media/tv/{id}. The `community` block contains the average rating,
+        total review count, and up to 3 recent reviews inline — enough for the
+        frontend to decide whether to show a "Load more" button without a
+        second request.
+
+
+        **Optional authentication:** Send a Bearer token to receive a `myRating`
+        field in the `community` block (your own score, or `null` if you have
+        not rated this title yet). The route is fully public without a token.
+      operationId: getEnrichedTVShowDetail
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/mediaIdParam'
+      responses:
+        '200':
+          description: Enriched TV show detail with community stats
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnrichedTVShowDetail'
+              example:
+                tmdb:
+                  id: 1396
+                  title: Breaking Bad
+                  overview: 'A chemistry teacher diagnosed with inoperable lung cancer turns to manufacturing and selling methamphetamine.'
+                  firstAirDate: '2008-01-20'
+                  lastAirDate: '2013-09-29'
+                  status: Ended
+                  totalSeasons: 5
+                  totalEpisodes: 62
+                  averageEpisodeMinutes: 45
+                  posterUrl: 'https://image.tmdb.org/t/p/w500/ggFHVNu6YYI5L9pCfOacjizRGt.jpg'
+                  backdropUrl: 'https://image.tmdb.org/t/p/original/tsRy63Mu5cu8etL1X7ZLyf7UP1M.jpg'
+                  genres:
+                    - id: 18
+                      name: Drama
+                    - id: 80
+                      name: Crime
+                  networks:
+                    - name: AMC
+                      logoUrl: 'https://image.tmdb.org/t/p/w92/alqLicR1ZMHMaZGP3xRQxn9sq7p.png'
+                  seasons:
+                    - seasonNumber: 1
+                      episodeCount: 7
+                      airDate: '2008-01-20'
+                      posterUrl: 'https://image.tmdb.org/t/p/w500/1BP4xYv9ZG4ZVHkL7ocOziBbSYH.jpg'
+                  cast:
+                    - name: Bryan Cranston
+                      character: Walter White
+                      profileUrl: 'https://image.tmdb.org/t/p/w185/7Jahy5LZX2Fo8fGJltMreAI49hC.jpg'
+                  similar: []
+                community:
+                  averageRating: null
+                  reviewCount: 0
+                  recentReviews: []
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '502':
+          description: Failed to reach TMDB upstream
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Failed to reach TMDB
+
   # ── Ratings ──────────────────────────────────
-  /ratings:
+  /v1/ratings:
     post:
       tags: [Ratings]
       summary: Submit or update a rating
@@ -387,7 +532,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalError'
 
-  /ratings/{tmdbId}:
+  /v1/ratings/{tmdbId}:
     get:
       tags: [Ratings]
       summary: Get ratings for a title
@@ -425,7 +570,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalError'
 
-  /ratings/{id}:
+  /v1/ratings/{id}:
     put:
       tags: [Ratings]
       summary: Update a rating
@@ -487,7 +632,7 @@ paths:
           $ref: '#/components/responses/InternalError'
 
   # ── Reviews ──────────────────────────────────
-  /reviews:
+  /v1/reviews:
     post:
       tags: [Reviews]
       summary: Submit a review
@@ -531,7 +676,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalError'
 
-  /reviews/{tmdbId}:
+  /v1/reviews/{tmdbId}:
     get:
       tags: [Reviews]
       summary: Get reviews for a title
@@ -568,7 +713,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalError'
 
-  /reviews/{id}:
+  /v1/reviews/{id}:
     put:
       tags: [Reviews]
       summary: Update a review
@@ -630,36 +775,48 @@ paths:
           $ref: '#/components/responses/InternalError'
 
   # ── Issues ──────────────────────────────
-  /issues:
+  /v1/issues:
     post:
-      summary: Submit a bug report or issue
-      description: Allows users to submit issues related to the application.
-      tags:
-        - Issues
+      tags: [Issues]
+      summary: Submit a bug report
+      description: >
+        Publicly accessible — no authentication required. Submits a bug report
+        or feedback item. `title` and `description` are required;
+        `reporterContact` is optional and never stored against an account.
+      operationId: createIssue
+      security: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - title
-                - description
-              properties:
-                title:
-                  type: string
-                  example: Bug report
-                description:
-                  type: string
-                  example: Something broke when clicking submit
-                reporterContact:
-                  type: string
-                  example: user@test.com
+              $ref: '#/components/schemas/IssueRequest'
+            example:
+              title: Search returns no results for exact title
+              description: Searching for "Inception" returns an empty list even though the movie exists.
+              reporterContact: user@example.com
       responses:
         '201':
-          description: Issue created successfully
+          description: Issue submitted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Issue'
+              example:
+                id: 1
+                title: Search returns no results for exact title
+                description: Searching for "Inception" returns an empty list even though the movie exists.
+                reporterContact: user@example.com
+                reproSteps: null
+                status: Open
+                createdAt: '2026-05-03T10:00:00Z'
+                updatedAt: '2026-05-03T10:00:00Z'
         '400':
-          description: Missing required fields
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+components:
   # ─────────────────────────────────────────────
   #  COMPONENTS
   # ─────────────────────────────────────────────
@@ -1093,6 +1250,98 @@ paths:
               items:
                 $ref: '#/components/schemas/TVShowCard'
 
+    # -- Enriched detail schemas ----------------
+    ReviewSummary:
+      type: object
+      required: [id, body, author, createdAt]
+      properties:
+        id:
+          type: integer
+          description: Review record ID
+          example: 1
+        title:
+          type: string
+          nullable: true
+          description: Optional review title
+          example: Mind-bending
+        body:
+          type: string
+          description: Review body text
+          example: Best movie I have ever seen.
+        author:
+          type: string
+          description: Display name or username of the reviewer
+          example: johndoe
+        createdAt:
+          type: string
+          format: date-time
+          description: When the review was posted
+          example: '2026-04-20T12:00:00Z'
+
+    CommunityStats:
+      type: object
+      required: [averageRating, reviewCount, recentReviews]
+      properties:
+        averageRating:
+          type: number
+          format: float
+          nullable: true
+          description: >
+            Mean rating score (1–10) across all community ratings.
+            `null` when no ratings exist — use this to distinguish "no data"
+            from a score of zero.
+          minimum: 1
+          maximum: 10
+          example: 4.3
+        reviewCount:
+          type: integer
+          description: Total number of community reviews submitted for this title
+          example: 12
+        recentReviews:
+          type: array
+          description: Up to 3 most recent reviews; empty array when none exist
+          maxItems: 3
+          items:
+            $ref: '#/components/schemas/ReviewSummary'
+        myRating:
+          type: integer
+          nullable: true
+          description: >
+            The authenticated user's own rating (1–10), or `null` if they have
+            not rated this title. Only present when a valid Bearer token is
+            supplied — omitted entirely on unauthenticated requests.
+          minimum: 1
+          maximum: 10
+          example: 8
+
+    EnrichedMovieDetail:
+      type: object
+      required: [tmdb, community]
+      properties:
+        tmdb:
+          description: >
+            TMDB movie metadata. Same shape as MovieDetail but without
+            `rating` and `voteCount` — TMDB scores are intentionally
+            excluded so clients rely on community data only.
+          allOf:
+            - $ref: '#/components/schemas/MovieDetail'
+        community:
+          $ref: '#/components/schemas/CommunityStats'
+
+    EnrichedTVShowDetail:
+      type: object
+      required: [tmdb, community]
+      properties:
+        tmdb:
+          description: >
+            TMDB TV show metadata. Same shape as TVShowDetail but without
+            `rating` and `voteCount` — TMDB scores are intentionally
+            excluded so clients rely on community data only.
+          allOf:
+            - $ref: '#/components/schemas/TVShowDetail'
+        community:
+          $ref: '#/components/schemas/CommunityStats'
+
     # -- Pagination wrapper ---------------------
     PaginationMeta:
       type: object
@@ -1351,6 +1600,62 @@ paths:
         status:
           type: string
           example: OK
+
+    # -- Issue schemas --------------------------
+    IssueRequest:
+      type: object
+      required: [title, description]
+      properties:
+        title:
+          type: string
+          description: Short summary of the issue
+          example: Search returns no results for exact title
+        description:
+          type: string
+          description: Full description of the problem
+          example: Searching for "Inception" returns an empty list even though the movie exists.
+        reporterContact:
+          type: string
+          description: Optional email or name — not linked to any account
+          example: user@example.com
+
+    Issue:
+      type: object
+      required: [id, title, description, status, createdAt, updatedAt]
+      properties:
+        id:
+          type: integer
+          description: Issue record ID
+          example: 1
+        title:
+          type: string
+          example: Search returns no results for exact title
+        description:
+          type: string
+          example: Searching for "Inception" returns an empty list.
+        reproSteps:
+          type: string
+          nullable: true
+          description: Optional reproduction steps
+          example: null
+        reporterContact:
+          type: string
+          nullable: true
+          description: Submitter contact info (optional, anonymous)
+          example: user@example.com
+        status:
+          type: string
+          enum: [Open, InProgress, Resolved, Closed, Wontfix]
+          description: Current triage status
+          example: Open
+        createdAt:
+          type: string
+          format: date-time
+          example: '2026-05-03T10:00:00Z'
+        updatedAt:
+          type: string
+          format: date-time
+          example: '2026-05-03T10:00:00Z'
 
   # ── Security Schemes ────────────────────────
   securitySchemes:
