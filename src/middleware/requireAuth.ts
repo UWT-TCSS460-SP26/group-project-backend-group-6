@@ -68,7 +68,6 @@ export const requireAuth: Array<RequestHandler | ErrorRequestHandler> = [
   handleAuthError,
 ];
 
-
 /**
  * Exact-match role gate. Use after requireAuth:
  *

@@ -1,10 +1,6 @@
 import express from 'express';
 import request from 'supertest';
-import {
-  attachUser,
-  handleAuthError,
-  requireAuth,
-} from '../../../src/middleware/requireAuth';
+import { attachUser, handleAuthError, requireAuth } from '../../../src/middleware/requireAuth';
 
 describe('attachUser', () => {
   it('copies req.auth to req.user when auth payload exists', async () => {
@@ -24,9 +20,7 @@ describe('attachUser', () => {
   it('leaves req.user undefined when req.auth is absent', async () => {
     const app = express();
     app.use(attachUser as any);
-    app.get('/test', (req: any, res: any) =>
-      res.json({ hasUser: req.user !== undefined })
-    );
+    app.get('/test', (req: any, res: any) => res.json({ hasUser: req.user !== undefined }));
 
     const res = await request(app).get('/test');
     expect(res.status).toBe(200);

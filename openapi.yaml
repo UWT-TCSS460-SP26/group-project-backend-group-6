@@ -628,7 +628,7 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalError'
-  
+
   # ── Issues ──────────────────────────────
   /issues:
     post:
@@ -656,9 +656,9 @@ paths:
                   type: string
                   example: user@test.com
       responses:
-        "201":
+        '201':
           description: Issue created successfully
-        "400":
+        '400':
           description: Missing required fields
   # ─────────────────────────────────────────────
   #  COMPONENTS
