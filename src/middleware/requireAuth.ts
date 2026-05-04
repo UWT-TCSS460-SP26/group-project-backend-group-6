@@ -47,14 +47,14 @@ const verifyJwt = expressjwt({
   algorithms: ['RS256'],
 });
 
-const attachUser = (request: JwtRequest, _response: Response, next: NextFunction): void => {
+export const attachUser = (request: JwtRequest, _response: Response, next: NextFunction): void => {
   if (request.auth) {
     (request as Request).user = request.auth as AuthenticatedUser;
   }
   next();
 };
 
-const handleAuthError: ErrorRequestHandler = (error, _request, response, next) => {
+export const handleAuthError: ErrorRequestHandler = (error, _request, response, next) => {
   if (error && (error as { name?: string }).name === 'UnauthorizedError') {
     response.status(401).json({ error: 'Invalid or missing token' });
     return;
@@ -62,13 +62,6 @@ const handleAuthError: ErrorRequestHandler = (error, _request, response, next) =
   next(error);
 };
 
-/**
- * Verifies the Authorization: Bearer <token> header against the auth-squared
- * issuer's JWKS (RS256) and attaches the decoded payload to request.user.
- *
- * Replaces backend-2's HS256 + JWT_SECRET verification. Token issuance is
- * entirely owned by auth-squared; this API never mints tokens.
- */
 export const requireAuth: Array<RequestHandler | ErrorRequestHandler> = [
   verifyJwt,
   attachUser,

@@ -20,7 +20,7 @@ jest.mock('../../../src/lib/prisma', () => ({
   },
 }));
 
-let mockUser = { sub: '1', role: 'user', email: 'user1@test.local' };
+let mockUser = { sub: '1', role: 'User', email: 'user1@test.local' };
 
 jest.mock('../../../src/middleware/requireAuth', () => ({
   requireAuth: [
@@ -65,7 +65,7 @@ describe('Reviews Router', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
-    mockUser = { sub: '1', role: 'user', email: 'user1@test.local' };
+    mockUser = { sub: '1', role: 'User', email: 'user1@test.local' };
   });
 
   // ---------------------------------------------------------------------------

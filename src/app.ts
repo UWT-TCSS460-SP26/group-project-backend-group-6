@@ -9,6 +9,7 @@ import { moviesRouter } from './routes/v1/media/movies';
 import { tvRouter } from './routes/v1/media/tv';
 import { ratingsRouter } from './routes/v1/ratings';
 import { reviewsRouter } from './routes/v1/reviews';
+import { issuesRouter } from './routes/v1/issues';
 
 const app = express();
 
@@ -63,6 +64,7 @@ app.use('/v1/media', tvRouter);
 app.use('/v1/media/movies', moviesRouter);
 app.use('/v1/ratings', ratingsRouter);
 app.use('/v1/reviews', reviewsRouter);
+app.use('/v1/issues', issuesRouter);
 
 // ── 404 catch-all ────────────────────────────────────────────────────────────
 app.use((_request: Request, response: Response) => {

@@ -629,6 +629,37 @@ paths:
         '500':
           $ref: '#/components/responses/InternalError'
 
+  # ── Issues ──────────────────────────────
+  /issues:
+    post:
+      summary: Submit a bug report or issue
+      description: Allows users to submit issues related to the application.
+      tags:
+        - Issues
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+                - description
+              properties:
+                title:
+                  type: string
+                  example: Bug report
+                description:
+                  type: string
+                  example: Something broke when clicking submit
+                reporterContact:
+                  type: string
+                  example: user@test.com
+      responses:
+        '201':
+          description: Issue created successfully
+        '400':
+          description: Missing required fields
   # ─────────────────────────────────────────────
   #  COMPONENTS
   # ─────────────────────────────────────────────
