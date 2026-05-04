@@ -1,6 +1,6 @@
 import { prisma } from './prisma';
 import type { AuthenticatedUser } from '../middleware/requireAuth';
-import type { User } from '../generated/prisma';
+import type { User } from '@prisma/client';
 
 // Shape of the Auth² userinfo response we care about.
 // Fields are optional — Auth² may omit any of them depending on the user's
