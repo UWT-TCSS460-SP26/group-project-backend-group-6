@@ -9,4 +9,4 @@ process.env.JWT_SECRET = 'test-secret';
 
 process.env.AUTH_ISSUER = 'https://fake.issuer.com/';
 process.env.API_AUDIENCE = 'https://fake.audience.com/';
-process.env.DATABASE_URL = 'postgresql://fake:fake@localhost:5432/fake';
+process.env.DATABASE_URL = 'postgresql://postgres:mysecretpassword@localhost:5432/tcss460';
