@@ -10,18 +10,18 @@ jest.mock('../../../src/lib/prisma', () => ({
   },
 }));
 
-describe('POST /v1/issues', () => {
+describe('POST /issues', () => {
   it('creates an issue with valid input', async () => {
     (prisma.issue.create as jest.Mock).mockResolvedValue({
       id: 1,
       title: 'Bug report',
       description: 'Something broke',
       reporterContact: 'user@test.com',
-      status: 'InProgress',
+      status: 'Open',
       createdAt: new Date(),
     });
 
-    const res = await request(app).post('/v1/issues').send({
+    const res = await request(app).post('/issues').send({
       title: 'Bug report',
       description: 'Something broke',
       reporterContact: 'user@test.com',
@@ -32,7 +32,7 @@ describe('POST /v1/issues', () => {
   });
 
   it('returns 400 when title missing', async () => {
-    const res = await request(app).post('/v1/issues').send({
+    const res = await request(app).post('/issues').send({
       description: 'Missing title',
     });
 
@@ -40,7 +40,7 @@ describe('POST /v1/issues', () => {
   });
 
   it('returns 400 when description missing', async () => {
-    const res = await request(app).post('/v1/issues').send({
+    const res = await request(app).post('/issues').send({
       title: 'Missing description',
     });
 

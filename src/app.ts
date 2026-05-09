@@ -64,7 +64,7 @@ app.use('/v1/media', tvRouter);
 app.use('/v1/media/movies', moviesRouter);
 app.use('/v1/ratings', ratingsRouter);
 app.use('/v1/reviews', reviewsRouter);
-app.use('/v1/issues', issuesRouter);
+app.use('/issues', issuesRouter);
 
 // ── 404 catch-all ────────────────────────────────────────────────────────────
 app.use((_request: Request, response: Response) => {
