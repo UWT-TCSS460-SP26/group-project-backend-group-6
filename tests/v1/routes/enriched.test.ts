@@ -108,7 +108,7 @@ const setupCommunityWithData = () => {
       title: 'Great film',
       body: 'Loved every minute.',
       createdAt: new Date('2026-04-20'),
-      user: { username: 'johndoe', displayName: 'John Doe' },
+      user: { subjectId: 'auth2|johndoe', username: 'johndoe', displayName: 'John Doe' },
     },
   ]);
 };
@@ -227,7 +227,7 @@ describe('Enriched Routes', () => {
         id: 1,
         title: 'Great film',
         body: 'Loved every minute.',
-        author: 'John Doe',
+        author: { id: 'auth2|johndoe', username: 'John Doe' },
       });
     });
 
@@ -240,12 +240,15 @@ describe('Enriched Routes', () => {
           title: null,
           body: 'Solid.',
           createdAt: new Date(),
-          user: { username: 'janedoe', displayName: null },
+          user: { subjectId: 'auth2|janedoe', username: 'janedoe', displayName: null },
         },
       ]);
       mockFetchSequence({ ok: true, status: 200, json: () => Promise.resolve(mockMovieDetail) });
       const res = await request(app).get('/v1/media/movies/27205/enriched');
-      expect(res.body.community.recentReviews[0].author).toBe('janedoe');
+      expect(res.body.community.recentReviews[0].author).toEqual({
+        id: 'auth2|janedoe',
+        username: 'janedoe',
+      });
     });
 
     it('unauthenticated response has no myRating field', async () => {

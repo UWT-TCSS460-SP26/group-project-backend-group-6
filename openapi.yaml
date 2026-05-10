@@ -257,7 +257,9 @@ paths:
                     - id: 1
                       title: Mind-bending
                       body: Best movie I have ever seen.
-                      author: johndoe
+                      author:
+                        id: auth2|abc123
+                        username: johndoe
                       createdAt: '2026-04-20T12:00:00Z'
                   myRating: 8
         '404':
@@ -487,6 +489,88 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
               example:
                 error: Failed to reach TMDB
+
+  # ── Self-list ────────────────────────────────
+  /v1/reviews/me:
+    get:
+      tags: [Reviews]
+      summary: My reviews
+      description: >
+        Returns paginated reviews written by the authenticated user, sorted most
+        recent first. Identity is always read from the Bearer token — a `userId`
+        query parameter is never accepted.
+      operationId: getMyReviews
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/pageParam'
+      responses:
+        '200':
+          description: Reviews written by the authenticated user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MyReviewListResponse'
+              example:
+                totalReviews: 1
+                page: 1
+                totalPages: 1
+                results:
+                  - id: 1
+                    tmdbId: 550
+                    mediaType: movie
+                    title: A haunting masterpiece
+                    body: Fight Club is a film that gets better with every rewatch.
+                    userId: 3
+                    author:
+                      id: auth2|abc123
+                      username: johndoe
+                    createdAt: '2026-04-20T12:00:00Z'
+                    updatedAt: '2026-04-20T12:00:00Z'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /v1/ratings/me:
+    get:
+      tags: [Ratings]
+      summary: My ratings
+      description: >
+        Returns paginated ratings submitted by the authenticated user, sorted most
+        recent first. Identity is always read from the Bearer token — a `userId`
+        query parameter is never accepted.
+      operationId: getMyRatings
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/pageParam'
+      responses:
+        '200':
+          description: Ratings submitted by the authenticated user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MyRatingListResponse'
+              example:
+                totalRatings: 1
+                page: 1
+                totalPages: 1
+                results:
+                  - id: 1
+                    tmdbId: 550
+                    mediaType: movie
+                    score: 9
+                    userId: 3
+                    author:
+                      id: auth2|abc123
+                      username: johndoe
+                    createdAt: '2026-04-20T12:00:00Z'
+                    updatedAt: '2026-04-20T12:00:00Z'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
 
   # ── Ratings ──────────────────────────────────
   /v1/ratings:
@@ -1269,9 +1353,7 @@ components:
           description: Review body text
           example: Best movie I have ever seen.
         author:
-          type: string
-          description: Display name or username of the reviewer
-          example: johndoe
+          $ref: '#/components/schemas/Author'
         createdAt:
           type: string
           format: date-time
@@ -1382,6 +1464,26 @@ components:
               items:
                 $ref: '#/components/schemas/TVShowCard'
 
+    # -- Author identity ------------------------
+    Author:
+      type: object
+      required: [id, username]
+      properties:
+        id:
+          type: string
+          description: >
+            Stable Auth² subject identifier (`sub` claim). Never changes, never
+            reused — safe to store as a long-term reference to this user.
+          example: auth2|abc123
+        username:
+          type: string
+          description: >
+            Display name resolved in priority order from the local user row:
+            explicit `displayName` → `firstName lastName` → `username`.
+            `username` is always present (falls back to the subject ID on first
+            sign-in if the userinfo enrichment fails), so this field is never null.
+          example: johndoe
+
     # -- Ratings --------------------------------
     RatingRequest:
       type: object
@@ -1416,7 +1518,7 @@ components:
 
     Rating:
       type: object
-      required: [id, tmdbId, mediaType, score, userId, createdAt, updatedAt]
+      required: [id, tmdbId, mediaType, score, userId, author, createdAt, updatedAt]
       properties:
         id:
           type: integer
@@ -1435,8 +1537,10 @@ components:
           example: 9
         userId:
           type: integer
-          description: ID of the user who submitted the rating
+          description: Internal integer PK of the author
           example: 3
+        author:
+          $ref: '#/components/schemas/Author'
         createdAt:
           type: string
           format: date-time
@@ -1466,6 +1570,25 @@ components:
           type: integer
           description: Total number of ratings submitted for this title
           example: 3
+        page:
+          type: integer
+          example: 1
+        totalPages:
+          type: integer
+          example: 1
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Rating'
+
+    MyRatingListResponse:
+      type: object
+      required: [totalRatings, page, totalPages, results]
+      properties:
+        totalRatings:
+          type: integer
+          description: Total ratings submitted by the authenticated user
+          example: 5
         page:
           type: integer
           example: 1
@@ -1519,7 +1642,7 @@ components:
 
     Review:
       type: object
-      required: [id, tmdbId, mediaType, body, userId, createdAt, updatedAt]
+      required: [id, tmdbId, mediaType, body, userId, author, createdAt, updatedAt]
       properties:
         id:
           type: integer
@@ -1541,8 +1664,10 @@ components:
           example: Fight Club is a film that gets better with every rewatch.
         userId:
           type: integer
-          description: ID of the user who wrote the review
+          description: Internal integer PK of the author
           example: 3
+        author:
+          $ref: '#/components/schemas/Author'
         createdAt:
           type: string
           format: date-time
@@ -1567,6 +1692,25 @@ components:
           type: integer
           description: Total number of reviews submitted for this title
           example: 1
+        page:
+          type: integer
+          example: 1
+        totalPages:
+          type: integer
+          example: 1
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Review'
+
+    MyReviewListResponse:
+      type: object
+      required: [totalReviews, page, totalPages, results]
+      properties:
+        totalReviews:
+          type: integer
+          description: Total reviews written by the authenticated user
+          example: 3
         page:
           type: integer
           example: 1

@@ -1,7 +1,23 @@
 import { Request, Response } from 'express';
+import type { User, Review } from '@prisma/client';
 import { prisma } from '../../lib/prisma';
 import { resolveLocalUser, bearerToken } from '../../lib/resolveLocalUser';
 import { ReviewBody, PatchReviewBody } from '../../middleware/validationZod';
+
+type ReviewWithUser = Review & { user: User };
+
+function makeAuthor(user: User) {
+  const name =
+    user.displayName ??
+    (user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : null) ??
+    user.username;
+  return { id: user.subjectId, username: name };
+}
+
+function shapeReview(review: ReviewWithUser) {
+  const { user, ...rest } = review;
+  return { ...rest, author: makeAuthor(user) };
+}
 
 /**
  * POST /reviews
@@ -11,15 +27,14 @@ import { ReviewBody, PatchReviewBody } from '../../middleware/validationZod';
 export const createReview = async (request: Request, response: Response): Promise<void> => {
   const { tmdbId, mediaType, title, body } = request.body as ReviewBody;
 
-  // resolveLocalUser gives us the integer PK we can use as a FK.
-  // Auth²'s sub is a string like "auth2|abc123" — never parseInt it directly.
   const localUser = await resolveLocalUser(bearerToken(request), request.user!);
 
   const review = await prisma.review.create({
     data: { userId: localUser.id, tmdbId, mediaType, title, body },
+    include: { user: true },
   });
 
-  response.status(201).json(review);
+  response.status(201).json(shapeReview(review));
 };
 
 /**
@@ -44,6 +59,7 @@ export const getReviewsByTmdbId = async (request: Request, response: Response): 
   const [reviews, totalReviews] = await Promise.all([
     prisma.review.findMany({
       where,
+      include: { user: true },
       skip: (page - 1) * pageSize,
       take: pageSize,
       orderBy: { createdAt: 'desc' },
@@ -57,7 +73,36 @@ export const getReviewsByTmdbId = async (request: Request, response: Response): 
     totalReviews,
     page,
     totalPages: Math.ceil(totalReviews / pageSize),
-    results: reviews,
+    results: reviews.map(shapeReview),
+  });
+};
+
+/**
+ * GET /reviews/me
+ * Authenticated — returns paginated reviews written by the calling user.
+ * Identity is read from request.user.sub; a userId query param is never trusted.
+ */
+export const getMyReviews = async (request: Request, response: Response): Promise<void> => {
+  const page = Math.max(1, Number(request.query.page) || 1);
+  const pageSize = 20;
+  const where = { user: { subjectId: request.user!.sub } };
+
+  const [reviews, totalReviews] = await Promise.all([
+    prisma.review.findMany({
+      where,
+      include: { user: true },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      orderBy: { createdAt: 'desc' },
+    }),
+    prisma.review.count({ where }),
+  ]);
+
+  response.json({
+    totalReviews,
+    page,
+    totalPages: Math.ceil(totalReviews / pageSize),
+    results: reviews.map(shapeReview),
   });
 };
 
@@ -92,9 +137,10 @@ export const updateReview = async (request: Request, response: Response): Promis
       ...(title !== undefined && { title }),
       ...(body !== undefined && { body }),
     },
+    include: { user: true },
   });
 
-  response.json(updated);
+  response.json(shapeReview(updated));
 };
 
 /**
