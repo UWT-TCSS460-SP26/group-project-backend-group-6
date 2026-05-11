@@ -57,8 +57,7 @@ export const listIssues = async (request: Request, response: Response): Promise<
         totalPages: Math.ceil(total / limitNum),
       },
     });
-  } catch (error) {
-    console.error('[listIssues]', error);
+  } catch {
     response.status(500).json({ error: 'Failed to retrieve issues' });
   }
 };
@@ -81,8 +80,7 @@ export const getIssue = async (request: Request, response: Response): Promise<vo
     }
 
     response.json({ data: issue });
-  } catch (error) {
-    console.error('[getIssue]', error);
+  } catch {
     response.status(500).json({ error: 'Failed to retrieve issue' });
   }
 };
@@ -109,7 +107,6 @@ export const patchIssue = async (request: Request, response: Response): Promise<
       response.status(404).json({ error: `Issue ${id} not found` });
       return;
     }
-    console.error('[patchIssue]', error);
     response.status(500).json({ error: 'Failed to update issue' });
   }
 };
@@ -130,7 +127,6 @@ export const deleteIssue = async (request: Request, response: Response): Promise
       response.status(404).json({ error: `Issue ${id} not found` });
       return;
     }
-    console.error('[deleteIssue]', error);
     response.status(500).json({ error: 'Failed to delete issue' });
   }
 };

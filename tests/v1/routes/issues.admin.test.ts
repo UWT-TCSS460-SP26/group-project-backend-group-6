@@ -88,20 +88,20 @@ afterAll(async () => {
 
 describe('GET /issues', () => {
   it('returns 401 with no token', async () => {
-    const res = await request(app).get('/issues');
+    const res = await request(app).get('/v1/issues');
     expect(res.status).toBe(401);
   });
 
   it('returns 403 for a User-role token', async () => {
     const res = await request(app)
-      .get('/issues')
+      .get('/v1/issues')
       .set(asUser({ sub: 'u1', role: 'User' }));
     expect(res.status).toBe(403);
   });
 
   it('returns 403 for a Moderator-role token', async () => {
     const res = await request(app)
-      .get('/issues')
+      .get('/v1/issues')
       .set(asUser({ sub: 'u1', role: 'Moderator' }));
     expect(res.status).toBe(403);
   });
@@ -111,7 +111,7 @@ describe('GET /issues', () => {
     await seedIssue({ title: 'Bug B' });
 
     const res = await request(app)
-      .get('/issues')
+      .get('/v1/issues')
       .set(asUser({ sub: 'admin1', role: 'Admin' }));
 
     expect(res.status).toBe(200);
@@ -123,12 +123,12 @@ describe('GET /issues', () => {
     await seedIssue();
 
     const sa = await request(app)
-      .get('/issues')
+      .get('/v1/issues')
       .set(asUser({ sub: 'sa', role: 'SuperAdmin' }));
     expect(sa.status).toBe(200);
 
     const ow = await request(app)
-      .get('/issues')
+      .get('/v1/issues')
       .set(asUser({ sub: 'ow', role: 'Owner' }));
     expect(ow.status).toBe(200);
   });
@@ -139,7 +139,7 @@ describe('GET /issues', () => {
     }
 
     const res = await request(app)
-      .get('/issues?page=2&limit=2')
+      .get('/v1/issues?page=2&limit=2')
       .set(asUser({ sub: 'admin1', role: 'Admin' }));
 
     expect(res.status).toBe(200);
@@ -152,7 +152,7 @@ describe('GET /issues', () => {
     await seedIssue({ status: 'Resolved' });
 
     const res = await request(app)
-      .get('/issues?status=Open')
+      .get('/v1/issues?status=Open')
       .set(asUser({ sub: 'admin1', role: 'Admin' }));
 
     expect(res.status).toBe(200);
@@ -166,7 +166,7 @@ describe('GET /issues', () => {
     await seedIssue({ status: 'Resolved' });
 
     const res = await request(app)
-      .get('/issues?status=Open,Closed')
+      .get('/v1/issues?status=Open,Closed')
       .set(asUser({ sub: 'admin1', role: 'Admin' }));
 
     expect(res.status).toBe(200);
@@ -175,14 +175,14 @@ describe('GET /issues', () => {
 
   it('returns 400 for an invalid status value', async () => {
     const res = await request(app)
-      .get('/issues?status=banana')
+      .get('/v1/issues?status=banana')
       .set(asUser({ sub: 'admin1', role: 'Admin' }));
     expect(res.status).toBe(400);
   });
 
   it('returns 400 for an invalid sort value', async () => {
     const res = await request(app)
-      .get('/issues?sort=random')
+      .get('/v1/issues?sort=random')
       .set(asUser({ sub: 'admin1', role: 'Admin' }));
     expect(res.status).toBe(400);
   });
@@ -192,7 +192,7 @@ describe('GET /issues', () => {
     await seedIssue({ title: 'Second' });
 
     const res = await request(app)
-      .get('/issues?sort=oldest')
+      .get('/v1/issues?sort=oldest')
       .set(asUser({ sub: 'admin1', role: 'Admin' }));
 
     expect(res.status).toBe(200);
@@ -201,7 +201,7 @@ describe('GET /issues', () => {
 
   it('returns empty data array when no issues exist', async () => {
     const res = await request(app)
-      .get('/issues')
+      .get('/v1/issues')
       .set(asUser({ sub: 'admin1', role: 'Admin' }));
 
     expect(res.status).toBe(200);
@@ -217,14 +217,14 @@ describe('GET /issues', () => {
 describe('GET /issues/:id', () => {
   it('returns 401 with no token', async () => {
     const issue = await seedIssue();
-    const res = await request(app).get(`/issues/${issue.id}`);
+    const res = await request(app).get(`/v1/issues/${issue.id}`);
     expect(res.status).toBe(401);
   });
 
   it('returns 403 for a non-admin', async () => {
     const issue = await seedIssue();
     const res = await request(app)
-      .get(`/issues/${issue.id}`)
+      .get(`/v1/issues/${issue.id}`)
       .set(asUser({ sub: 'u1', role: 'User' }));
     expect(res.status).toBe(403);
   });
@@ -233,7 +233,7 @@ describe('GET /issues/:id', () => {
     const issue = await seedIssue({ title: 'Specific bug', description: 'Details here' });
 
     const res = await request(app)
-      .get(`/issues/${issue.id}`)
+      .get(`/v1/issues/${issue.id}`)
       .set(asUser({ sub: 'admin1', role: 'Admin' }));
 
     expect(res.status).toBe(200);
@@ -242,14 +242,14 @@ describe('GET /issues/:id', () => {
 
   it('returns 404 for a non-existent id', async () => {
     const res = await request(app)
-      .get('/issues/99999')
+      .get('/v1/issues/99999')
       .set(asUser({ sub: 'admin1', role: 'Admin' }));
     expect(res.status).toBe(404);
   });
 
   it('returns 400 for a non-numeric id', async () => {
     const res = await request(app)
-      .get('/issues/not-a-number')
+      .get('/v1/issues/not-a-number')
       .set(asUser({ sub: 'admin1', role: 'Admin' }));
     expect(res.status).toBe(400);
   });
@@ -262,14 +262,14 @@ describe('GET /issues/:id', () => {
 describe('PATCH /issues/:id', () => {
   it('returns 401 with no token', async () => {
     const issue = await seedIssue();
-    const res = await request(app).patch(`/issues/${issue.id}`).send({ status: 'Resolved' });
+    const res = await request(app).patch(`/v1/issues/${issue.id}`).send({ status: 'Resolved' });
     expect(res.status).toBe(401);
   });
 
   it('returns 403 for a non-admin', async () => {
     const issue = await seedIssue();
     const res = await request(app)
-      .patch(`/issues/${issue.id}`)
+      .patch(`/v1/issues/${issue.id}`)
       .set(asUser({ sub: 'u1', role: 'User' }))
       .send({ status: 'Resolved' });
     expect(res.status).toBe(403);
@@ -279,7 +279,7 @@ describe('PATCH /issues/:id', () => {
     const issue = await seedIssue({ status: 'Open' });
 
     const res = await request(app)
-      .patch(`/issues/${issue.id}`)
+      .patch(`/v1/issues/${issue.id}`)
       .set(asUser({ sub: 'admin1', role: 'Admin' }))
       .send({ status: 'InProgress' });
 
@@ -293,7 +293,7 @@ describe('PATCH /issues/:id', () => {
     const statuses = ['InProgress', 'Resolved', 'Closed', 'Wontfix'] as const;
 
     for (const status of statuses) {
-      const res = await request(app).patch(`/issues/${issue.id}`).set(admin).send({ status });
+      const res = await request(app).patch(`/v1/issues/${issue.id}`).set(admin).send({ status });
       expect(res.status).toBe(200);
       expect(res.body.data.status).toBe(status);
     }
@@ -302,7 +302,7 @@ describe('PATCH /issues/:id', () => {
   it('returns 400 for an unknown status string', async () => {
     const issue = await seedIssue();
     const res = await request(app)
-      .patch(`/issues/${issue.id}`)
+      .patch(`/v1/issues/${issue.id}`)
       .set(asUser({ sub: 'admin1', role: 'Admin' }))
       .send({ status: 'not-a-real-status' });
     expect(res.status).toBe(400);
@@ -311,7 +311,7 @@ describe('PATCH /issues/:id', () => {
   it('returns 400 for unknown body keys', async () => {
     const issue = await seedIssue();
     const res = await request(app)
-      .patch(`/issues/${issue.id}`)
+      .patch(`/v1/issues/${issue.id}`)
       .set(asUser({ sub: 'admin1', role: 'Admin' }))
       .send({ title: 'Trying to overwrite reporter content' });
     expect(res.status).toBe(400);
@@ -320,7 +320,7 @@ describe('PATCH /issues/:id', () => {
   it('accepts an empty body without error (no-op)', async () => {
     const issue = await seedIssue({ status: 'Open' });
     const res = await request(app)
-      .patch(`/issues/${issue.id}`)
+      .patch(`/v1/issues/${issue.id}`)
       .set(asUser({ sub: 'admin1', role: 'Admin' }))
       .send({});
     expect(res.status).toBe(200);
@@ -329,7 +329,7 @@ describe('PATCH /issues/:id', () => {
 
   it('returns 404 for a non-existent id', async () => {
     const res = await request(app)
-      .patch('/issues/99999')
+      .patch('/v1/issues/99999')
       .set(asUser({ sub: 'admin1', role: 'Admin' }))
       .send({ status: 'Resolved' });
     expect(res.status).toBe(404);
@@ -343,14 +343,14 @@ describe('PATCH /issues/:id', () => {
 describe('DELETE /issues/:id', () => {
   it('returns 401 with no token', async () => {
     const issue = await seedIssue();
-    const res = await request(app).delete(`/issues/${issue.id}`);
+    const res = await request(app).delete(`/v1/issues/${issue.id}`);
     expect(res.status).toBe(401);
   });
 
   it('returns 403 for a non-admin', async () => {
     const issue = await seedIssue();
     const res = await request(app)
-      .delete(`/issues/${issue.id}`)
+      .delete(`/v1/issues/${issue.id}`)
       .set(asUser({ sub: 'u1', role: 'User' }));
     expect(res.status).toBe(403);
   });
@@ -359,7 +359,7 @@ describe('DELETE /issues/:id', () => {
     const issue = await seedIssue({ title: 'To be deleted' });
 
     const res = await request(app)
-      .delete(`/issues/${issue.id}`)
+      .delete(`/v1/issues/${issue.id}`)
       .set(asUser({ sub: 'admin1', role: 'Admin' }));
 
     expect(res.status).toBe(200);
@@ -371,7 +371,7 @@ describe('DELETE /issues/:id', () => {
 
   it('returns 404 for a non-existent id', async () => {
     const res = await request(app)
-      .delete('/issues/99999')
+      .delete('/v1/issues/99999')
       .set(asUser({ sub: 'admin1', role: 'Admin' }));
     expect(res.status).toBe(404);
   });
