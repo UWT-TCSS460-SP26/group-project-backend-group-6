@@ -26,38 +26,26 @@ issuesRouter.post('/', createIssue);
  */
 
 // List issues with filtering (e.g., ?status=Open,InProgress)
-issuesRouter.get(
-  '/', 
-  requireAuth, 
-  requireRoleAtLeast('Admin'), 
-  validateIssueListQuery, 
-  listIssues
-);
+issuesRouter.get('/', requireAuth, requireRoleAtLeast('Admin'), validateIssueListQuery, listIssues);
 
 // View a single issue
-issuesRouter.get(
-  '/:id', 
-  requireAuth, 
-  requireRoleAtLeast('Admin'), 
-  validateNumericId, 
-  getIssue
-);
+issuesRouter.get('/:id', requireAuth, requireRoleAtLeast('Admin'), validateNumericId, getIssue);
 
 // Update issue status (Triage)
 issuesRouter.patch(
-  '/:id', 
-  requireAuth, 
-  requireRoleAtLeast('Admin'), 
-  validateNumericId, 
-  validatePatchIssueBody, 
+  '/:id',
+  requireAuth,
+  requireRoleAtLeast('Admin'),
+  validateNumericId,
+  validatePatchIssueBody,
   patchIssue
 );
 
 // Remove an issue
 issuesRouter.delete(
-  '/:id', 
-  requireAuth, 
-  requireRoleAtLeast('Admin'), 
-  validateNumericId, 
+  '/:id',
+  requireAuth,
+  requireRoleAtLeast('Admin'),
+  validateNumericId,
   deleteIssue
 );

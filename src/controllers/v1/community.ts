@@ -68,7 +68,12 @@ const fetchTmdbCard = async (
 };
 
 const enrichRows = async (
-  rows: { tmdbId: number; mediaType: string; _avg: { score: number | null }; _count: { score: number } }[]
+  rows: {
+    tmdbId: number;
+    mediaType: string;
+    _avg: { score: number | null };
+    _count: { score: number };
+  }[]
 ) => {
   const tmdbResults = await Promise.allSettled(
     rows.map((r) => fetchTmdbCard(r.tmdbId, r.mediaType as MediaType))

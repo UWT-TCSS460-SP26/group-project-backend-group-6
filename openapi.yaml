@@ -865,7 +865,7 @@ paths:
           $ref: '#/components/responses/InternalError'
 
   # ── Issues ──────────────────────────────
-  /issues:
+  /v1/issues:
     get:
       tags: [Issues]
       summary: List bug reports (Admin)
@@ -936,7 +936,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /issues/{id}:
+  /v1/issues/{id}:
     get:
       tags: [Issues]
       summary: Get issue details (Admin)

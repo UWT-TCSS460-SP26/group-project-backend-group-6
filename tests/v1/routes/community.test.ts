@@ -83,30 +83,27 @@ describe('Community Routes', () => {
 
   // ── Shared guard tests ──────────────────────────────────────────────────────
 
-  describe.each(['/v1/community/top-rated', '/v1/community/most-reviewed'])(
-    '%s',
-    (route) => {
-      it('returns 503 when TMDB_API_KEY is not set', async () => {
-        delete process.env.TMDB_API_KEY;
-        const res = await request(app).get(route);
-        expect(res.status).toBe(503);
-      });
+  describe.each(['/v1/community/top-rated', '/v1/community/most-reviewed'])('%s', (route) => {
+    it('returns 503 when TMDB_API_KEY is not set', async () => {
+      delete process.env.TMDB_API_KEY;
+      const res = await request(app).get(route);
+      expect(res.status).toBe(503);
+    });
 
-      it('returns 400 when mediaType is invalid', async () => {
-        (prisma.rating.groupBy as jest.Mock).mockResolvedValue([]);
-        const res = await request(app).get(`${route}?mediaType=anime`);
-        expect(res.status).toBe(400);
-        expect(res.body.message).toMatch(/mediaType/);
-      });
+    it('returns 400 when mediaType is invalid', async () => {
+      (prisma.rating.groupBy as jest.Mock).mockResolvedValue([]);
+      const res = await request(app).get(`${route}?mediaType=anime`);
+      expect(res.status).toBe(400);
+      expect(res.body.message).toMatch(/mediaType/);
+    });
 
-      it('returns 200 with an empty results array when no ratings exist', async () => {
-        (prisma.rating.groupBy as jest.Mock).mockResolvedValue([]);
-        const res = await request(app).get(route);
-        expect(res.status).toBe(200);
-        expect(res.body.results).toEqual([]);
-      });
-    }
-  );
+    it('returns 200 with an empty results array when no ratings exist', async () => {
+      (prisma.rating.groupBy as jest.Mock).mockResolvedValue([]);
+      const res = await request(app).get(route);
+      expect(res.status).toBe(200);
+      expect(res.body.results).toEqual([]);
+    });
+  });
 
   // ── GET /v1/community/top-rated ─────────────────────────────────────────────
 
@@ -138,9 +135,7 @@ describe('Community Routes', () => {
     });
 
     it('returns enriched results with rank, averageScore, ratingCount, and tmdb', async () => {
-      (prisma.rating.groupBy as jest.Mock).mockResolvedValue([
-        makeRow(550, 'movie', 9.2, 42),
-      ]);
+      (prisma.rating.groupBy as jest.Mock).mockResolvedValue([makeRow(550, 'movie', 9.2, 42)]);
       mockFetchSequence(ok(mockMovieTmdb));
 
       const res = await request(app).get('/v1/community/top-rated');
@@ -157,9 +152,7 @@ describe('Community Routes', () => {
     });
 
     it('rounds averageScore to one decimal place', async () => {
-      (prisma.rating.groupBy as jest.Mock).mockResolvedValue([
-        makeRow(550, 'movie', 7.333333, 9),
-      ]);
+      (prisma.rating.groupBy as jest.Mock).mockResolvedValue([makeRow(550, 'movie', 7.333333, 9)]);
       mockFetchSequence(ok(mockMovieTmdb));
 
       const res = await request(app).get('/v1/community/top-rated');
@@ -169,9 +162,7 @@ describe('Community Routes', () => {
     it('respects limit param and caps at 25', async () => {
       (prisma.rating.groupBy as jest.Mock).mockResolvedValue([]);
       await request(app).get('/v1/community/top-rated?limit=999');
-      expect(prisma.rating.groupBy).toHaveBeenCalledWith(
-        expect.objectContaining({ take: 25 })
-      );
+      expect(prisma.rating.groupBy).toHaveBeenCalledWith(expect.objectContaining({ take: 25 }));
     });
 
     it('filters by mediaType when provided', async () => {
@@ -245,9 +236,7 @@ describe('Community Routes', () => {
     });
 
     it('returns enriched results with rank, averageScore, ratingCount, and tmdb', async () => {
-      (prisma.rating.groupBy as jest.Mock).mockResolvedValue([
-        makeRow(550, 'movie', 7.5, 150),
-      ]);
+      (prisma.rating.groupBy as jest.Mock).mockResolvedValue([makeRow(550, 'movie', 7.5, 150)]);
       mockFetchSequence(ok(mockMovieTmdb));
 
       const res = await request(app).get('/v1/community/most-reviewed');
@@ -265,9 +254,7 @@ describe('Community Routes', () => {
     it('respects limit param and caps at 25', async () => {
       (prisma.rating.groupBy as jest.Mock).mockResolvedValue([]);
       await request(app).get('/v1/community/most-reviewed?limit=999');
-      expect(prisma.rating.groupBy).toHaveBeenCalledWith(
-        expect.objectContaining({ take: 25 })
-      );
+      expect(prisma.rating.groupBy).toHaveBeenCalledWith(expect.objectContaining({ take: 25 }));
     });
 
     it('filters by mediaType=tv when provided', async () => {

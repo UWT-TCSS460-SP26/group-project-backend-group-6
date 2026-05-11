@@ -274,9 +274,7 @@ describe('GET /v1/users/me/ratings', () => {
     const res = await request(app).get('/v1/users/me/ratings?pageSize=999');
 
     expect(res.body.pageSize).toBe(50);
-    expect(prisma.rating.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({ take: 50 })
-    );
+    expect(prisma.rating.findMany).toHaveBeenCalledWith(expect.objectContaining({ take: 50 }));
   });
 
   // ── Sort ────────────────────────────────────────────────────────────────────

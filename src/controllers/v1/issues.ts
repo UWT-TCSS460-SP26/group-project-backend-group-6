@@ -35,9 +35,7 @@ export const listIssues = async (request: Request, response: Response): Promise<
   const sort = (query.sort as string | undefined) ?? 'newest';
   const skip = (pageNum - 1) * limitNum;
 
-  const statusFilter = status
-    ? status.split(',').map((s) => s.trim() as IssueStatus)
-    : undefined;
+  const statusFilter = status ? status.split(',').map((s) => s.trim() as IssueStatus) : undefined;
 
   const where: Prisma.IssueWhereInput = statusFilter?.length
     ? { status: { in: statusFilter } }
@@ -59,8 +57,7 @@ export const listIssues = async (request: Request, response: Response): Promise<
         totalPages: Math.ceil(total / limitNum),
       },
     });
-  } catch (error) {
-    console.error('[listIssues]', error);
+  } catch {
     response.status(500).json({ error: 'Failed to retrieve issues' });
   }
 };
@@ -83,8 +80,7 @@ export const getIssue = async (request: Request, response: Response): Promise<vo
     }
 
     response.json({ data: issue });
-  } catch (error) {
-    console.error('[getIssue]', error);
+  } catch {
     response.status(500).json({ error: 'Failed to retrieve issue' });
   }
 };
@@ -107,14 +103,10 @@ export const patchIssue = async (request: Request, response: Response): Promise<
     const updated = await prisma.issue.update({ where: { id }, data });
     response.json({ data: updated });
   } catch (error) {
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === 'P2025'
-    ) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
       response.status(404).json({ error: `Issue ${id} not found` });
       return;
     }
-    console.error('[patchIssue]', error);
     response.status(500).json({ error: 'Failed to update issue' });
   }
 };
@@ -131,14 +123,10 @@ export const deleteIssue = async (request: Request, response: Response): Promise
     const deleted = await prisma.issue.delete({ where: { id } });
     response.json({ data: deleted });
   } catch (error) {
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === 'P2025'
-    ) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
       response.status(404).json({ error: `Issue ${id} not found` });
       return;
     }
-    console.error('[deleteIssue]', error);
     response.status(500).json({ error: 'Failed to delete issue' });
   }
 };

@@ -130,7 +130,7 @@ describe('Reviews Router', () => {
   // GET /v1/reviews/me
   // ---------------------------------------------------------------------------
   describe('GET /v1/reviews/me', () => {
-    it('returns 200 with the authenticated user\'s reviews', async () => {
+    it("returns 200 with the authenticated user's reviews", async () => {
       (prisma.review.findMany as jest.Mock).mockResolvedValue([mockReview]);
       (prisma.review.count as jest.Mock).mockResolvedValue(1);
 

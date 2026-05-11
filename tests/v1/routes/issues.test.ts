@@ -21,7 +21,7 @@ describe('POST /issues', () => {
       createdAt: new Date(),
     });
 
-    const res = await request(app).post('/issues').send({
+    const res = await request(app).post('/v1/issues').send({
       title: 'Bug report',
       description: 'Something broke',
       reporterContact: 'user@test.com',
@@ -32,7 +32,7 @@ describe('POST /issues', () => {
   });
 
   it('returns 400 when title missing', async () => {
-    const res = await request(app).post('/issues').send({
+    const res = await request(app).post('/v1/issues').send({
       description: 'Missing title',
     });
 
@@ -40,7 +40,7 @@ describe('POST /issues', () => {
   });
 
   it('returns 400 when description missing', async () => {
-    const res = await request(app).post('/issues').send({
+    const res = await request(app).post('/v1/issues').send({
       title: 'Missing description',
     });
 

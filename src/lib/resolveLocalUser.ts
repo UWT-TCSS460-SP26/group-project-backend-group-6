@@ -49,13 +49,9 @@ export async function resolveLocalUser(token: string, authUser: AuthenticatedUse
     });
     if (res.ok) {
       info = (await res.json()) as UserInfoResponse;
-    } else {
-      // Log the failure but don't block the request — fall back to token claims.
-      console.error(`[resolveLocalUser] userinfo ${res.status} for sub=${authUser.sub}`);
     }
-  } catch (err) {
+  } catch {
     // Network error — proceed with token-only data rather than failing the request.
-    console.error('[resolveLocalUser] userinfo fetch threw:', err);
   }
 
   // Derive best-available values with sensible fallbacks.

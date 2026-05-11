@@ -10,6 +10,21 @@ jobs:
   lint-and-test:
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: testuser
+          POSTGRES_PASSWORD: testpass
+          POSTGRES_DB: testdb
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - uses: actions/checkout@v5
 
@@ -29,11 +44,22 @@ jobs:
       - name: Generate Prisma Client
         run: npx prisma generate
         env:
-          DATABASE_URL: 'postgresql://fake:fake@localhost:5432/fake'
-          DIRECT_URL: 'postgresql://fake:fake@localhost:5432/fake'
+          DATABASE_URL: 'postgresql://testuser:testpass@localhost:5432/testdb'
+          DIRECT_URL: 'postgresql://testuser:testpass@localhost:5432/testdb'
+
+      - name: Run Migrations
+        run: npx prisma migrate deploy
+        env:
+          CI: 'true'
+          DATABASE_URL: 'postgresql://testuser:testpass@localhost:5432/testdb'
 
       - name: Build
         run: npm run build
 
       - name: Test
         run: npm test
+        env:
+          CI: 'true'
+          DATABASE_URL: 'postgresql://testuser:testpass@localhost:5432/testdb'
+          AUTH_ISSUER: 'https://tcss-460-iam.onrender.com'
+          API_AUDIENCE: 'group-6-api'
