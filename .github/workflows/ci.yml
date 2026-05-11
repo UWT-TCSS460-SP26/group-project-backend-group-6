@@ -50,8 +50,8 @@ jobs:
       - name: Run Migrations
         run: npx prisma migrate deploy
         env:
-          DATABASE_URL: 'postgresql://testuser:testpass@localhost:5432/testdb?sslmode=disable'
-          DIRECT_URL: 'postgresql://testuser:testpass@localhost:5432/testdb?sslmode=disable'
+          CI: 'true'
+          DATABASE_URL: 'postgresql://testuser:testpass@localhost:5432/testdb'
 
       - name: Build
         run: npm run build
@@ -59,7 +59,7 @@ jobs:
       - name: Test
         run: npm test
         env:
-          DATABASE_URL: 'postgresql://testuser:testpass@localhost:5432/testdb?sslmode=disable'
-          DIRECT_URL: 'postgresql://testuser:testpass@localhost:5432/testdb?sslmode=disable'
+          CI: 'true'
+          DATABASE_URL: 'postgresql://testuser:testpass@localhost:5432/testdb'
           AUTH_ISSUER: 'https://tcss-460-iam.onrender.com'
           API_AUDIENCE: 'group-6-api'
