@@ -88,8 +88,7 @@ export const getMyRatings = async (request: Request, response: Response): Promis
     ...(mediaTypeFilter ? { mediaType: mediaTypeFilter as MediaType } : {}),
   };
 
-  const orderBy =
-    sort === 'score' ? { score: 'desc' as const } : { createdAt: 'desc' as const };
+  const orderBy = sort === 'score' ? { score: 'desc' as const } : { createdAt: 'desc' as const };
 
   const [ratings, totalCount] = await Promise.all([
     prisma.rating.findMany({ where, skip: (page - 1) * pageSize, take: pageSize, orderBy }),

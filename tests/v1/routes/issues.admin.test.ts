@@ -122,10 +122,14 @@ describe('GET /issues', () => {
   it('also allows SuperAdmin and Owner (hierarchy gate)', async () => {
     await seedIssue();
 
-    const sa = await request(app).get('/issues').set(asUser({ sub: 'sa', role: 'SuperAdmin' }));
+    const sa = await request(app)
+      .get('/issues')
+      .set(asUser({ sub: 'sa', role: 'SuperAdmin' }));
     expect(sa.status).toBe(200);
 
-    const ow = await request(app).get('/issues').set(asUser({ sub: 'ow', role: 'Owner' }));
+    const ow = await request(app)
+      .get('/issues')
+      .set(asUser({ sub: 'ow', role: 'Owner' }));
     expect(ow.status).toBe(200);
   });
 
@@ -289,10 +293,7 @@ describe('PATCH /issues/:id', () => {
     const statuses = ['InProgress', 'Resolved', 'Closed', 'Wontfix'] as const;
 
     for (const status of statuses) {
-      const res = await request(app)
-        .patch(`/issues/${issue.id}`)
-        .set(admin)
-        .send({ status });
+      const res = await request(app).patch(`/issues/${issue.id}`).set(admin).send({ status });
       expect(res.status).toBe(200);
       expect(res.body.data.status).toBe(status);
     }

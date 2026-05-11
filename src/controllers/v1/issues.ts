@@ -35,9 +35,7 @@ export const listIssues = async (request: Request, response: Response): Promise<
   const sort = (query.sort as string | undefined) ?? 'newest';
   const skip = (pageNum - 1) * limitNum;
 
-  const statusFilter = status
-    ? status.split(',').map((s) => s.trim() as IssueStatus)
-    : undefined;
+  const statusFilter = status ? status.split(',').map((s) => s.trim() as IssueStatus) : undefined;
 
   const where: Prisma.IssueWhereInput = statusFilter?.length
     ? { status: { in: statusFilter } }
@@ -107,10 +105,7 @@ export const patchIssue = async (request: Request, response: Response): Promise<
     const updated = await prisma.issue.update({ where: { id }, data });
     response.json({ data: updated });
   } catch (error) {
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === 'P2025'
-    ) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
       response.status(404).json({ error: `Issue ${id} not found` });
       return;
     }
@@ -131,10 +126,7 @@ export const deleteIssue = async (request: Request, response: Response): Promise
     const deleted = await prisma.issue.delete({ where: { id } });
     response.json({ data: deleted });
   } catch (error) {
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === 'P2025'
-    ) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
       response.status(404).json({ error: `Issue ${id} not found` });
       return;
     }
