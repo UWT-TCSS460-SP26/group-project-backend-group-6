@@ -27,6 +27,8 @@ info:
 servers:
   - url: https://tcss460-team-6-api.onrender.com
     description: Deployed production server
+  - url: http://localhost:3000
+    description: Local development server
 
 tags:
   - name: General
@@ -41,6 +43,10 @@ tags:
     description: User reviews for movies and TV shows
   - name: Issues
     description: Public bug report and feedback submissions
+  - name: Users
+    description: Authenticated user profile and activity routes
+  - name: Community
+    description: Public discovery feeds — top-rated and most-reviewed titles
 
 security: [] # public by default; individual operations opt in
 
@@ -900,6 +906,238 @@ paths:
         '500':
           $ref: '#/components/responses/InternalError'
 
+  # ── Community ───────────────────────────────
+  /v1/community/top-rated:
+    get:
+      tags: [Community]
+      summary: Top-rated titles
+      description: >
+        Public — no authentication required. Returns the titles with the highest
+        community average rating, filtered by a minimum vote count so
+        single-review outliers don't dominate the list.
+
+
+        The aggregation (`GROUP BY tmdbId, mediaType HAVING COUNT(*) >= minVotes
+        ORDER BY AVG(score) DESC`) runs in the database. Each result is then
+        enriched with lightweight TMDB metadata. Queries run live on every request.
+      operationId: getTopRated
+      security: []
+      parameters:
+        - name: limit
+          in: query
+          description: Number of results to return (max 25)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 25
+            default: 10
+        - name: minVotes
+          in: query
+          description: Minimum number of ratings a title must have to appear
+          schema:
+            type: integer
+            minimum: 1
+            default: 3
+        - name: mediaType
+          in: query
+          description: Filter to only movies or only TV shows. Omit to return both.
+          schema:
+            type: string
+            enum: [movie, tv]
+      responses:
+        '200':
+          description: Top-rated discovery feed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommunityFeedResponse'
+              example:
+                feed: top-rated
+                minVotes: 3
+                results:
+                  - rank: 1
+                    tmdbId: 550
+                    mediaType: movie
+                    averageScore: 9.2
+                    ratingCount: 42
+                    tmdb:
+                      id: 550
+                      title: Fight Club
+                      overview: An insomniac office worker forms an underground fight club.
+                      releaseYear: 1999
+                      releaseDate: '1999-10-15'
+                      posterUrl: 'https://image.tmdb.org/t/p/w500/poster.jpg'
+                      genres:
+                        - id: 18
+                          name: Drama
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  /v1/community/most-reviewed:
+    get:
+      tags: [Community]
+      summary: Most-reviewed titles
+      description: >
+        Public — no authentication required. Returns the titles with the most
+        community ratings, regardless of score — shows what the community is
+        actively engaging with right now.
+
+
+        The aggregation (`GROUP BY tmdbId, mediaType ORDER BY COUNT(*) DESC`)
+        runs in the database. Each result is then enriched with lightweight
+        TMDB metadata. Queries run live on every request.
+      operationId: getMostReviewed
+      security: []
+      parameters:
+        - name: limit
+          in: query
+          description: Number of results to return (max 25)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 25
+            default: 10
+        - name: mediaType
+          in: query
+          description: Filter to only movies or only TV shows. Omit to return both.
+          schema:
+            type: string
+            enum: [movie, tv]
+      responses:
+        '200':
+          description: Most-reviewed discovery feed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommunityFeedResponse'
+              example:
+                feed: most-reviewed
+                results:
+                  - rank: 1
+                    tmdbId: 550
+                    mediaType: movie
+                    averageScore: 7.5
+                    ratingCount: 150
+                    tmdb:
+                      id: 550
+                      title: Fight Club
+                      overview: An insomniac office worker forms an underground fight club.
+                      releaseYear: 1999
+                      releaseDate: '1999-10-15'
+                      posterUrl: 'https://image.tmdb.org/t/p/w500/poster.jpg'
+                      genres:
+                        - id: 18
+                          name: Drama
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  # ── Users ───────────────────────────────────
+  /v1/users/me/ratings:
+    get:
+      tags: [Users]
+      summary: Get my rated movies and shows
+      description: >
+        Returns a paginated list of every title the authenticated user has rated,
+        each enriched with lightweight TMDB metadata (title, poster, release year,
+        genres). The `score` field is the user's own rating from the database —
+        no TMDB community ratings or reviews are included.
+
+
+        The `sub` claim from the Bearer token determines whose ratings are returned.
+        A `userId` query parameter is never trusted even if provided.
+
+
+        Items whose TMDB record has been removed appear with `tmdb: null` — the
+        rating row is still returned so history is never silently dropped.
+      operationId: getMyRatings
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: Page number (1-based)
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: pageSize
+          in: query
+          description: Results per page (max 50)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 20
+        - name: sort
+          in: query
+          description: Sort order — `date` (most recently rated first) or `score` (highest score first)
+          schema:
+            type: string
+            enum: [date, score]
+            default: date
+        - name: mediaType
+          in: query
+          description: Filter to only movies or only TV shows. Omit to return both.
+          schema:
+            type: string
+            enum: [movie, tv]
+      responses:
+        '200':
+          description: Paginated enriched ratings list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MyRatingsResponse'
+              example:
+                page: 1
+                pageSize: 20
+                totalCount: 2
+                totalPages: 1
+                sort: date
+                results:
+                  - id: 1
+                    score: 8
+                    tmdbId: 27205
+                    mediaType: movie
+                    createdAt: '2026-04-01T12:00:00Z'
+                    updatedAt: '2026-04-01T12:00:00Z'
+                    tmdb:
+                      id: 27205
+                      title: Inception
+                      overview: A thief who steals corporate secrets through dream-sharing.
+                      releaseYear: 2010
+                      releaseDate: '2010-07-16'
+                      posterUrl: 'https://image.tmdb.org/t/p/w500/poster.jpg'
+                      genres:
+                        - id: 28
+                          name: Action
+                  - id: 2
+                    score: 9
+                    tmdbId: 1396
+                    mediaType: tv
+                    createdAt: '2026-04-10T12:00:00Z'
+                    updatedAt: '2026-04-10T12:00:00Z'
+                    tmdb:
+                      id: 1396
+                      title: Breaking Bad
+                      overview: A chemistry teacher turns to manufacturing methamphetamine.
+                      releaseYear: 2008
+                      firstAirDate: '2008-01-20'
+                      posterUrl: 'https://image.tmdb.org/t/p/w500/bbposter.jpg'
+                      genres:
+                        - id: 18
+                          name: Drama
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
 components:
   # ─────────────────────────────────────────────
   #  COMPONENTS
@@ -1483,6 +1721,186 @@ components:
             `username` is always present (falls back to the subject ID on first
             sign-in if the userinfo enrichment fails), so this field is never null.
           example: johndoe
+    # -- Community feeds ------------------------
+    CommunityFeedItem:
+      type: object
+      required: [rank, tmdbId, mediaType, averageScore, ratingCount, tmdb]
+      properties:
+        rank:
+          type: integer
+          description: Position in the feed (1-based)
+          example: 1
+        tmdbId:
+          type: integer
+          example: 550
+        mediaType:
+          type: string
+          enum: [movie, tv]
+          example: movie
+        averageScore:
+          type: number
+          nullable: true
+          description: Community average score rounded to one decimal place
+          example: 9.2
+        ratingCount:
+          type: integer
+          description: Number of ratings this title has received
+          example: 42
+        tmdb:
+          nullable: true
+          description: TMDB metadata for this title. `null` if the title was removed from TMDB.
+          oneOf:
+            - $ref: '#/components/schemas/TmdbMovieCard'
+            - $ref: '#/components/schemas/TmdbTvCard'
+
+    CommunityFeedResponse:
+      type: object
+      required: [feed, results]
+      properties:
+        feed:
+          type: string
+          enum: [top-rated, most-reviewed]
+          example: top-rated
+        minVotes:
+          type: integer
+          description: Only present on the top-rated feed — the minimum vote floor applied
+          example: 3
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/CommunityFeedItem'
+
+    # -- My Ratings (enriched) ------------------
+    TmdbMovieCard:
+      type: object
+      description: Lightweight TMDB metadata for a movie — enough to render a list card
+      properties:
+        id:
+          type: integer
+          example: 27205
+        title:
+          type: string
+          example: Inception
+        overview:
+          type: string
+          example: A thief who steals corporate secrets through dream-sharing.
+        releaseYear:
+          type: integer
+          example: 2010
+        releaseDate:
+          type: string
+          nullable: true
+          example: '2010-07-16'
+        posterUrl:
+          type: string
+          nullable: true
+          example: 'https://image.tmdb.org/t/p/w500/poster.jpg'
+        genres:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              name:
+                type: string
+
+    TmdbTvCard:
+      type: object
+      description: Lightweight TMDB metadata for a TV show — enough to render a list card
+      properties:
+        id:
+          type: integer
+          example: 1396
+        title:
+          type: string
+          example: Breaking Bad
+        overview:
+          type: string
+          example: A chemistry teacher turns to manufacturing methamphetamine.
+        releaseYear:
+          type: integer
+          example: 2008
+        firstAirDate:
+          type: string
+          nullable: true
+          example: '2008-01-20'
+        posterUrl:
+          type: string
+          nullable: true
+          example: 'https://image.tmdb.org/t/p/w500/bbposter.jpg'
+        genres:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              name:
+                type: string
+
+    EnrichedRating:
+      type: object
+      required: [id, score, tmdbId, mediaType, createdAt, updatedAt, tmdb]
+      properties:
+        id:
+          type: integer
+          description: Rating record ID
+          example: 1
+        score:
+          type: integer
+          minimum: 1
+          maximum: 10
+          description: The user's own score
+          example: 8
+        tmdbId:
+          type: integer
+          example: 27205
+        mediaType:
+          type: string
+          enum: [movie, tv]
+          example: movie
+        createdAt:
+          type: string
+          format: date-time
+          example: '2026-04-01T12:00:00Z'
+        updatedAt:
+          type: string
+          format: date-time
+          example: '2026-04-01T12:00:00Z'
+        tmdb:
+          nullable: true
+          description: >
+            TMDB metadata for this title. `null` when the title has been removed
+            from TMDB — the rating row is still returned so history is preserved.
+          oneOf:
+            - $ref: '#/components/schemas/TmdbMovieCard'
+            - $ref: '#/components/schemas/TmdbTvCard'
+
+    MyRatingsResponse:
+      type: object
+      required: [page, pageSize, totalCount, totalPages, sort, results]
+      properties:
+        page:
+          type: integer
+          example: 1
+        pageSize:
+          type: integer
+          example: 20
+        totalCount:
+          type: integer
+          example: 47
+        totalPages:
+          type: integer
+          example: 3
+        sort:
+          type: string
+          enum: [date, score]
+          example: date
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/EnrichedRating'
 
     # -- Ratings --------------------------------
     RatingRequest:
