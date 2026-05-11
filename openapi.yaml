@@ -27,6 +27,8 @@ info:
 servers:
   - url: https://tcss460-team-6-api.onrender.com
     description: Deployed production server
+  - url: http://localhost:3000
+    description: Local development server
 
 tags:
   - name: General
