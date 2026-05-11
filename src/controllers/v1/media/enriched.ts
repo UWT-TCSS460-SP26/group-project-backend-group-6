@@ -12,7 +12,7 @@ type ReviewWithUser = {
   title: string | null;
   body: string;
   createdAt: Date;
-  user: { username: string; displayName: string | null };
+  user: { subjectId: string; username: string; displayName: string | null };
 };
 
 const buildTmdbUrl = (path: string, params: Record<string, string | number> = {}): string => {
@@ -42,7 +42,7 @@ const fetchCommunityData = async (tmdbId: number, mediaType: MediaType) => {
       where,
       take: 3,
       orderBy: { createdAt: 'desc' },
-      include: { user: { select: { username: true, displayName: true } } },
+      include: { user: { select: { subjectId: true, username: true, displayName: true } } },
     }),
   ]);
   return {
@@ -52,7 +52,7 @@ const fetchCommunityData = async (tmdbId: number, mediaType: MediaType) => {
       id: r.id,
       title: r.title ?? null,
       body: r.body,
-      author: r.user.displayName ?? r.user.username,
+      author: { id: r.user.subjectId, username: r.user.displayName ?? r.user.username },
       createdAt: r.createdAt,
     })),
   };

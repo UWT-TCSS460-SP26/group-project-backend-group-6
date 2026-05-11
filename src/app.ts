@@ -10,6 +10,8 @@ import { tvRouter } from './routes/v1/media/tv';
 import { ratingsRouter } from './routes/v1/ratings';
 import { reviewsRouter } from './routes/v1/reviews';
 import { issuesRouter } from './routes/v1/issues';
+import { usersRouter } from './routes/v1/users';
+import { communityRouter } from './routes/v1/community';
 
 const app = express();
 
@@ -64,7 +66,9 @@ app.use('/v1/media', tvRouter);
 app.use('/v1/media/movies', moviesRouter);
 app.use('/v1/ratings', ratingsRouter);
 app.use('/v1/reviews', reviewsRouter);
-app.use('/issues', issuesRouter);
+app.use('/v1/issues', issuesRouter);
+app.use('/v1/users', usersRouter);
+app.use('/v1/community', communityRouter);
 
 // ── 404 catch-all ────────────────────────────────────────────────────────────
 app.use((_request: Request, response: Response) => {

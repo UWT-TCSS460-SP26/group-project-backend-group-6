@@ -2,6 +2,7 @@ import { Router } from 'express';
 import {
   createReview,
   getReviewsByTmdbId,
+  getMyReviews,
   updateReview,
   deleteReview,
 } from '../../controllers/v1/reviews';
@@ -14,6 +15,9 @@ import {
 } from '../../middleware/validationZod';
 
 export const reviewsRouter = Router();
+
+// /me must be registered before /:tmdbId so Express matches the literal first.
+reviewsRouter.get('/me', requireAuth, getMyReviews);
 
 reviewsRouter.post('/', requireAuth, validateReviewBody, createReview);
 reviewsRouter.get('/:tmdbId', validateTmdbParam, getReviewsByTmdbId);

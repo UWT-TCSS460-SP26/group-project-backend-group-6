@@ -37,6 +37,18 @@ jest.mock('../../../src/middleware/requireAuth', () => ({
   ROLE_HIERARCHY: ['User', 'Moderator', 'Admin', 'SuperAdmin', 'Owner'],
 }));
 
+const mockLocalUser = {
+  id: 1,
+  subjectId: '1',
+  email: 'user1@test.local',
+  username: 'user1',
+  firstName: null,
+  lastName: null,
+  displayName: null,
+  role: 'User',
+  createdAt: new Date(),
+};
+
 const mockReview = {
   id: 1,
   title: 'Great film',
@@ -46,17 +58,7 @@ const mockReview = {
   userId: 1,
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
-};
-
-const mockLocalUser = {
-  id: 1,
-  subjectId: '1',
-  email: 'user1@test.local',
-  username: 'user1',
-  firstName: null,
-  lastName: null,
-  role: 'User',
-  createdAt: new Date(),
+  user: mockLocalUser,
 };
 
 describe('Reviews Router', () => {
@@ -109,6 +111,7 @@ describe('Reviews Router', () => {
         tmdbId: 27205,
         mediaType: 'movie',
         body: 'Loved every moment of it.',
+        author: { id: '1', username: 'user1' },
       });
     });
 
@@ -120,6 +123,39 @@ describe('Reviews Router', () => {
         .send({ tmdbId: 27205, mediaType: 'movie', body: 'Loved every moment of it.' });
 
       expect(res.status).toBe(201);
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // GET /v1/reviews/me
+  // ---------------------------------------------------------------------------
+  describe('GET /v1/reviews/me', () => {
+    it('returns 200 with the authenticated user\'s reviews', async () => {
+      (prisma.review.findMany as jest.Mock).mockResolvedValue([mockReview]);
+      (prisma.review.count as jest.Mock).mockResolvedValue(1);
+
+      const res = await request(app).get('/v1/reviews/me');
+
+      expect(res.status).toBe(200);
+      expect(res.body).toMatchObject({
+        totalReviews: 1,
+        page: 1,
+        totalPages: 1,
+        results: expect.any(Array),
+      });
+      expect(res.body.results[0]).toMatchObject({
+        author: { id: '1', username: 'user1' },
+      });
+    });
+
+    it('returns empty results when user has no reviews', async () => {
+      (prisma.review.findMany as jest.Mock).mockResolvedValue([]);
+      (prisma.review.count as jest.Mock).mockResolvedValue(0);
+
+      const res = await request(app).get('/v1/reviews/me');
+
+      expect(res.status).toBe(200);
+      expect(res.body).toMatchObject({ totalReviews: 0, results: [] });
     });
   });
 
@@ -155,6 +191,18 @@ describe('Reviews Router', () => {
         totalReviews: 1,
         page: 1,
         results: expect.any(Array),
+      });
+    });
+
+    it('includes author identity on each result', async () => {
+      (prisma.review.findMany as jest.Mock).mockResolvedValue([mockReview]);
+      (prisma.review.count as jest.Mock).mockResolvedValue(1);
+
+      const res = await request(app).get('/v1/reviews/27205?mediaType=movie');
+
+      expect(res.status).toBe(200);
+      expect(res.body.results[0]).toMatchObject({
+        author: { id: '1', username: 'user1' },
       });
     });
 
@@ -207,7 +255,7 @@ describe('Reviews Router', () => {
       const res = await request(app).put('/v1/reviews/1').send({ body: 'Updated.' });
 
       expect(res.status).toBe(200);
-      expect(res.body).toMatchObject({ body: 'Updated.' });
+      expect(res.body).toMatchObject({ body: 'Updated.', author: { id: '1', username: 'user1' } });
     });
 
     it('allows an admin to update any review', async () => {

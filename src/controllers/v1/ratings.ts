@@ -1,7 +1,23 @@
 import { Request, Response } from 'express';
+import type { User, Rating } from '@prisma/client';
 import { prisma } from '../../lib/prisma';
 import { resolveLocalUser, bearerToken } from '../../lib/resolveLocalUser';
 import { RatingBody, PatchRatingBody } from '../../middleware/validationZod';
+
+type RatingWithUser = Rating & { user: User };
+
+function makeAuthor(user: User) {
+  const name =
+    user.displayName ??
+    (user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : null) ??
+    user.username;
+  return { id: user.subjectId, username: name };
+}
+
+function shapeRating(rating: RatingWithUser) {
+  const { user, ...rest } = rating;
+  return { ...rest, author: makeAuthor(user) };
+}
 
 /**
  * POST /ratings
@@ -11,17 +27,16 @@ import { RatingBody, PatchRatingBody } from '../../middleware/validationZod';
 export const createOrUpdateRating = async (request: Request, response: Response): Promise<void> => {
   const { tmdbId, mediaType, score } = request.body as RatingBody;
 
-  // resolveLocalUser gives us the integer PK we can use as a FK.
-  // Auth²'s sub is a string like "auth2|abc123" — never parseInt it directly.
   const localUser = await resolveLocalUser(bearerToken(request), request.user!);
 
   const rating = await prisma.rating.upsert({
     where: { userId_tmdbId_mediaType: { userId: localUser.id, tmdbId, mediaType } },
     update: { score },
     create: { userId: localUser.id, tmdbId, mediaType, score },
+    include: { user: true },
   });
 
-  response.status(200).json(rating);
+  response.status(200).json(shapeRating(rating));
 };
 
 /**
@@ -46,6 +61,7 @@ export const getRatingsByTmdbId = async (request: Request, response: Response): 
   const [ratings, totalRatings, aggregate] = await Promise.all([
     prisma.rating.findMany({
       where,
+      include: { user: true },
       skip: (page - 1) * pageSize,
       take: pageSize,
       orderBy: { createdAt: 'desc' },
@@ -61,7 +77,36 @@ export const getRatingsByTmdbId = async (request: Request, response: Response): 
     totalRatings,
     page,
     totalPages: Math.ceil(totalRatings / pageSize),
-    results: ratings,
+    results: ratings.map(shapeRating),
+  });
+};
+
+/**
+ * GET /ratings/me
+ * Authenticated — returns paginated ratings submitted by the calling user.
+ * Identity is read from request.user.sub; a userId query param is never trusted.
+ */
+export const getMyRatings = async (request: Request, response: Response): Promise<void> => {
+  const page = Math.max(1, Number(request.query.page) || 1);
+  const pageSize = 20;
+  const where = { user: { subjectId: request.user!.sub } };
+
+  const [ratings, totalRatings] = await Promise.all([
+    prisma.rating.findMany({
+      where,
+      include: { user: true },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      orderBy: { createdAt: 'desc' },
+    }),
+    prisma.rating.count({ where }),
+  ]);
+
+  response.json({
+    totalRatings,
+    page,
+    totalPages: Math.ceil(totalRatings / pageSize),
+    results: ratings.map(shapeRating),
   });
 };
 
@@ -89,8 +134,13 @@ export const updateRating = async (request: Request, response: Response): Promis
     return;
   }
 
-  const updated = await prisma.rating.update({ where: { id }, data: { score } });
-  response.json(updated);
+  const updated = await prisma.rating.update({
+    where: { id },
+    data: { score },
+    include: { user: true },
+  });
+
+  response.json(shapeRating(updated));
 };
 
 /**
