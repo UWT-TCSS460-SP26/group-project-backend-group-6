@@ -865,14 +865,59 @@ paths:
           $ref: '#/components/responses/InternalError'
 
   # ── Issues ──────────────────────────────
-  /v1/issues:
+  /issues:
+    get:
+      tags: [Issues]
+      summary: List bug reports (Admin)
+      description: Returns a paginated list of all issues. Requires Admin role or higher.
+      operationId: listIssues
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema: { type: integer, minimum: 1, default: 1 }
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+        - name: status
+          in: query
+          description: Filter by status. Supports comma-separated values (e.g., "Open,InProgress").
+          schema: { type: string }
+        - name: sort
+          in: query
+          description: Sort order by creation date.
+          schema: { type: string, enum: [newest, oldest], default: newest }
+      responses:
+        '200':
+          description: Paginated list of issues
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    type: object
+                    properties:
+                      total: { type: integer }
+                      page: { type: integer }
+                      limit: { type: integer }
+                      totalPages: { type: integer }
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Issue'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
     post:
       tags: [Issues]
       summary: Submit a bug report
       description: >
         Publicly accessible — no authentication required. Submits a bug report
-        or feedback item. `title` and `description` are required;
-        `reporterContact` is optional and never stored against an account.
+        or feedback item. `title` and `description` are required.
       operationId: createIssue
       security: []
       requestBody:
@@ -881,10 +926,6 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/IssueRequest'
-            example:
-              title: Search returns no results for exact title
-              description: Searching for "Inception" returns an empty list even though the movie exists.
-              reporterContact: user@example.com
       responses:
         '201':
           description: Issue submitted successfully
@@ -892,19 +933,86 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Issue'
-              example:
-                id: 1
-                title: Search returns no results for exact title
-                description: Searching for "Inception" returns an empty list even though the movie exists.
-                reporterContact: user@example.com
-                reproSteps: null
-                status: Open
-                createdAt: '2026-05-03T10:00:00Z'
-                updatedAt: '2026-05-03T10:00:00Z'
         '400':
           $ref: '#/components/responses/BadRequest'
-        '500':
-          $ref: '#/components/responses/InternalError'
+
+  /issues/{id}:
+    get:
+      tags: [Issues]
+      summary: Get issue details (Admin)
+      operationId: getIssueById
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/recordIdParam'
+      responses:
+        '200':
+          description: Single issue record
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Issue'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    patch:
+      tags: [Issues]
+      summary: Update issue status (Admin)
+      description: Update the triage status of an issue.
+      operationId: updateIssue
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/recordIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  $ref: '#/components/schemas/IssueStatus'
+      responses:
+        '200':
+          description: Issue updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Issue'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags: [Issues]
+      summary: Delete an issue (Admin)
+      operationId: deleteIssue
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/recordIdParam'
+      responses:
+        '200':
+          description: Issue deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Issue'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
   # ── Community ───────────────────────────────
   /v1/community/top-rated:
@@ -2163,7 +2271,13 @@ components:
           type: string
           example: OK
 
-    # -- Issue schemas --------------------------
+    # --- Issue schemas --------------------------
+    IssueStatus:
+      type: string
+      enum: [Open, InProgress, Resolved, Closed, Wontfix]
+      description: Current triage status
+      example: Open
+
     IssueRequest:
       type: object
       required: [title, description]
@@ -2178,6 +2292,7 @@ components:
           example: Searching for "Inception" returns an empty list even though the movie exists.
         reporterContact:
           type: string
+          nullable: true
           description: Optional email or name — not linked to any account
           example: user@example.com
 
@@ -2206,10 +2321,7 @@ components:
           description: Submitter contact info (optional, anonymous)
           example: user@example.com
         status:
-          type: string
-          enum: [Open, InProgress, Resolved, Closed, Wontfix]
-          description: Current triage status
-          example: Open
+          $ref: '#/components/schemas/IssueStatus'
         createdAt:
           type: string
           format: date-time

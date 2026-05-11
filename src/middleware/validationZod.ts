@@ -1,5 +1,8 @@
 import { z } from 'zod';
 import { RequestHandler } from 'express';
+import { IssueStatus } from '@prisma/client';
+
+const VALID_STATUSES = Object.values(IssueStatus) as [IssueStatus, ...IssueStatus[]];
 
 /**
  * Generic middleware factory. Parses `request[source]` against `schema`;
@@ -8,7 +11,7 @@ import { RequestHandler } from 'express';
  * properly typed data.
  */
 const validate =
-  (source: 'body' | 'params', schema: z.ZodType): RequestHandler =>
+  (source: 'body' | 'params' | 'query', schema: z.ZodType): RequestHandler =>
   (request, response, next) => {
     const result = schema.safeParse(request[source]);
     if (!result.success) {
@@ -21,7 +24,16 @@ const validate =
       });
       return;
     }
-    request[source] = result.data;
+    if (source === 'query') {
+      Object.defineProperty(request, 'query', {
+        configurable: true,
+        enumerable: true,
+        writable: true,
+        value: result.data,
+      });
+    } else {
+      request[source] = result.data;
+    }
     next();
   };
 
@@ -61,6 +73,31 @@ const PatchReviewBodySchema = z
     message: 'At least one field is required (title, body)',
   });
 
+const IssueListQuerySchema = z.object({
+  page: z.coerce.number().int().positive().optional(),
+  limit: z.coerce.number().int().positive().optional(),
+  status: z
+    .string()
+    .optional()
+    .refine(
+      (val) => {
+        if (!val) return true;
+        return val
+          .split(',')
+          .map((s) => s.trim())
+          .every((s) => (VALID_STATUSES as string[]).includes(s));
+      },
+      { message: `status must be one or more of: ${VALID_STATUSES.join(', ')}` }
+    ),
+  sort: z.enum(['newest', 'oldest']).optional(),
+});
+
+const PatchIssueBodySchema = z
+  .object({
+    status: z.nativeEnum(IssueStatus).optional(),
+  })
+  .strict();
+
 // --- Middleware exports ---
 
 export const validateTmdbParam = validate('params', TmdbParamSchema);
@@ -69,6 +106,8 @@ export const validateRatingBody = validate('body', RatingBodySchema);
 export const validatePatchRatingBody = validate('body', PatchRatingBodySchema);
 export const validateReviewBody = validate('body', ReviewBodySchema);
 export const validatePatchReviewBody = validate('body', PatchReviewBodySchema);
+export const validateIssueListQuery = validate('query', IssueListQuerySchema);
+export const validatePatchIssueBody = validate('body', PatchIssueBodySchema);
 
 // --- Inferred types ---
 
@@ -76,3 +115,5 @@ export type RatingBody = z.infer<typeof RatingBodySchema>;
 export type PatchRatingBody = z.infer<typeof PatchRatingBodySchema>;
 export type ReviewBody = z.infer<typeof ReviewBodySchema>;
 export type PatchReviewBody = z.infer<typeof PatchReviewBodySchema>;
+export type IssueListQuery = z.infer<typeof IssueListQuerySchema>;
+export type PatchIssueBody = z.infer<typeof PatchIssueBodySchema>;
