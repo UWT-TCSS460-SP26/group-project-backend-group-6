@@ -38,6 +38,18 @@ jest.mock('../../../src/middleware/requireAuth', () => ({
   ROLE_HIERARCHY: ['User', 'Moderator', 'Admin', 'SuperAdmin', 'Owner'],
 }));
 
+const mockLocalUser = {
+  id: 1,
+  subjectId: '1',
+  email: 'user1@test.local',
+  username: 'user1',
+  firstName: null,
+  lastName: null,
+  displayName: null,
+  role: 'User',
+  createdAt: new Date(),
+};
+
 const mockRating = {
   id: 1,
   score: 8,
@@ -46,17 +58,7 @@ const mockRating = {
   userId: 1,
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
-};
-
-const mockLocalUser = {
-  id: 1,
-  subjectId: '1',
-  email: 'user1@test.local',
-  username: 'user1',
-  firstName: null,
-  lastName: null,
-  role: 'User',
-  createdAt: new Date(),
+  user: mockLocalUser,
 };
 
 describe('Ratings Router', () => {
@@ -73,12 +75,13 @@ describe('Ratings Router', () => {
   // POST /v1/ratings
   // ---------------------------------------------------------------------------
   describe('POST /v1/ratings', () => {
-    it('returns 401 when no token is provided', async () => {
-      // Temporarily simulate missing auth by not setting user
+    it('route exists and accepts a rating request', async () => {
+      (prisma.rating.upsert as jest.Mock).mockResolvedValue(mockRating);
+
       const res = await request(app)
         .post('/v1/ratings')
         .send({ tmdbId: 27205, mediaType: 'movie', score: 8 });
-      // With mocked auth this will pass through — test that route exists
+      // With mocked auth this will always pass through.
       expect([200, 400, 401]).toContain(res.status);
     });
 
@@ -116,7 +119,45 @@ describe('Ratings Router', () => {
         .send({ tmdbId: 27205, mediaType: 'movie', score: 8 });
 
       expect(res.status).toBe(200);
-      expect(res.body).toMatchObject({ tmdbId: 27205, mediaType: 'movie', score: 8 });
+      expect(res.body).toMatchObject({
+        tmdbId: 27205,
+        mediaType: 'movie',
+        score: 8,
+        author: { id: '1', username: 'user1' },
+      });
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // GET /v1/ratings/me
+  // ---------------------------------------------------------------------------
+  describe('GET /v1/ratings/me', () => {
+    it('returns 200 with the authenticated user\'s ratings', async () => {
+      (prisma.rating.findMany as jest.Mock).mockResolvedValue([mockRating]);
+      (prisma.rating.count as jest.Mock).mockResolvedValue(1);
+
+      const res = await request(app).get('/v1/ratings/me');
+
+      expect(res.status).toBe(200);
+      expect(res.body).toMatchObject({
+        totalRatings: 1,
+        page: 1,
+        totalPages: 1,
+        results: expect.any(Array),
+      });
+      expect(res.body.results[0]).toMatchObject({
+        author: { id: '1', username: 'user1' },
+      });
+    });
+
+    it('returns empty results when user has no ratings', async () => {
+      (prisma.rating.findMany as jest.Mock).mockResolvedValue([]);
+      (prisma.rating.count as jest.Mock).mockResolvedValue(0);
+
+      const res = await request(app).get('/v1/ratings/me');
+
+      expect(res.status).toBe(200);
+      expect(res.body).toMatchObject({ totalRatings: 0, results: [] });
     });
   });
 
@@ -154,6 +195,19 @@ describe('Ratings Router', () => {
         averageScore: 8,
         page: 1,
         results: expect.any(Array),
+      });
+    });
+
+    it('includes author identity on each result', async () => {
+      (prisma.rating.findMany as jest.Mock).mockResolvedValue([mockRating]);
+      (prisma.rating.count as jest.Mock).mockResolvedValue(1);
+      (prisma.rating.aggregate as jest.Mock).mockResolvedValue({ _avg: { score: 8 } });
+
+      const res = await request(app).get('/v1/ratings/27205?mediaType=movie');
+
+      expect(res.status).toBe(200);
+      expect(res.body.results[0]).toMatchObject({
+        author: { id: '1', username: 'user1' },
       });
     });
 
@@ -207,7 +261,7 @@ describe('Ratings Router', () => {
       const res = await request(app).put('/v1/ratings/1').send({ score: 9 });
 
       expect(res.status).toBe(200);
-      expect(res.body).toMatchObject({ score: 9 });
+      expect(res.body).toMatchObject({ score: 9, author: { id: '1', username: 'user1' } });
     });
 
     it('allows an admin to update any rating', async () => {
