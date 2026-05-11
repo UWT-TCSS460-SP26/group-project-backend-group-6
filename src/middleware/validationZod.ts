@@ -24,7 +24,16 @@ const validate =
       });
       return;
     }
-    request[source] = result.data;
+    if (source === 'query') {
+      Object.defineProperty(request, 'query', {
+        configurable: true,
+        enumerable: true,
+        writable: true,
+        value: result.data,
+      });
+    } else {
+      request[source] = result.data;
+    }
     next();
   };
 
