@@ -60,9 +60,9 @@ describe('handleAuthError', () => {
 });
 
 describe('requireAuth', () => {
-  it('exports an array of three middleware handlers', () => {
+  it('exports an array of four middleware handlers', () => {
     expect(Array.isArray(requireAuth)).toBe(true);
-    expect(requireAuth).toHaveLength(3);
+    expect(requireAuth).toHaveLength(4);
     requireAuth.forEach((handler) => expect(typeof handler).toBe('function'));
   });
 });

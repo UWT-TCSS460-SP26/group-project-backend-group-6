@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction, RequestHandler, ErrorRequestHandler } from 'express';
 import { expressjwt, type Request as JwtRequest } from 'express-jwt';
 import jwksRsa from 'jwks-rsa';
+import { prisma } from '../lib/prisma';
 
 export const ROLE_HIERARCHY = ['User', 'Moderator', 'Admin', 'SuperAdmin', 'Owner'] as const;
 export type Role = (typeof ROLE_HIERARCHY)[number];
@@ -72,16 +73,47 @@ export const handleAuthError: ErrorRequestHandler = (error, _request, response, 
   next(error);
 };
 
+/**
+ * Overwrites req.user.role with the role stored in the local database.
+ * This decouples authorization (your DB) from authentication (the token playground).
+ * The token's `sub` identifies who the user is; your DB determines what they can do.
+ * Falls back to the token role if the user has no local row yet (first request).
+ */
+export const resolveDbRole: RequestHandler = async (
+  request: Request,
+  _response: Response,
+  next: NextFunction
+): Promise<void> => {
+  if (!request.user) {
+    next();
+    return;
+  }
+  try {
+    const dbUser = await prisma.user.findUnique({
+      where: { subjectId: request.user.sub },
+      select: { role: true },
+    });
+    if (dbUser) {
+      request.user.role = dbUser.role as Role;
+    }
+  } catch {
+    // DB unreachable — fall back to token role rather than blocking the request.
+  }
+  next();
+};
+
 export const requireAuth: Array<RequestHandler | ErrorRequestHandler> = [
   verifyJwt,
   attachUser,
   handleAuthError,
+  resolveDbRole,
 ];
 
 export const optionalAuth: Array<RequestHandler | ErrorRequestHandler> = [
   verifyJwtOptional,
   attachUser,
   handleAuthError,
+  resolveDbRole,
 ];
 
 /**
