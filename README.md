@@ -21,6 +21,8 @@ Deployed URL is at [https://tcss460-team-6-api.onrender.com](https://tcss460-tea
 
 API documentation is at [https://tcss460-team-6-api.onrender.com/api-docs](https://tcss460-team-6-api.onrender.com/api-docs).
 
+Bug Reporting is at [https://group-6-bug-tracker.vercel.app](https://group-6-bug-tracker.vercel.app).
+
 ## Token Generation
 
 Tokens are generated at this link: [https://tcss460-token-playground.onrender.com/](https://tcss460-token-playground.onrender.com/) under the group-6-api audience.
@@ -37,7 +39,7 @@ Allowed origins:
 
 ## Bug Reports?
 
-As of now, our intended bug reporting URL is at [https://tcss460-team-6-api.onrender.com/v1/issues](https://tcss460-team-6-api.onrender.com/v1/issues).
+Please submit a bug report at [https://group-6-bug-tracker.vercel.app](https://group-6-bug-tracker.vercel.app).
 
 ## Quirks?
 
